@@ -38,23 +38,46 @@ export default function ReportIssue({
     date: new Date().toISOString().split("T")[0],
   });
 
+  // =========================================================
   // BEFORE EVIDENCE
-  const [beforePhoto, setBeforePhoto] = useState(null);
-  const [beforePhotoPreview, setBeforePhotoPreview] = useState("");
+  // =========================================================
 
+  const [beforePhoto, setBeforePhoto] = useState(null);
+  const [beforePhotoPreview, setBeforePhotoPreview] =
+    useState("");
+
+  // =========================================================
   // LOCATION
+  // =========================================================
+
   const [location, setLocation] = useState(null);
 
+  // =========================================================
   // SUBMISSION
+  // =========================================================
+
   const [submitted, setSubmitted] = useState(false);
   const [issueId, setIssueId] = useState("");
 
+  // =========================================================
   // FOLLOW-UP EVIDENCE
+  // =========================================================
+
   const [afterPhoto, setAfterPhoto] = useState(null);
-  const [afterPhotoPreview, setAfterPhotoPreview] = useState("");
+  const [afterPhotoPreview, setAfterPhotoPreview] =
+    useState("");
+
   const [actionTaken, setActionTaken] = useState("");
-  const [outcome, setOutcome] = useState("Pending follow-up");
-  const [followUpSaved, setFollowUpSaved] = useState(false);
+
+  const [outcome, setOutcome] =
+    useState("Pending follow-up");
+
+  const [followUpSaved, setFollowUpSaved] =
+    useState(false);
+
+  // =========================================================
+  // FORM CHANGE
+  // =========================================================
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -65,16 +88,135 @@ export default function ReportIssue({
     }));
   };
 
+  // =========================================================
+  // IMAGE COMPRESSION
+  // =========================================================
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const image = new Image();
+
+        image.onload = () => {
+          const maxWidth = 900;
+          const maxHeight = 900;
+
+          let width = image.width;
+          let height = image.height;
+
+          if (
+            width > maxWidth ||
+            height > maxHeight
+          ) {
+            const ratio = Math.min(
+              maxWidth / width,
+              maxHeight / height
+            );
+
+            width = Math.round(width * ratio);
+            height = Math.round(height * ratio);
+          }
+
+          const canvas =
+            document.createElement("canvas");
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const context =
+            canvas.getContext("2d");
+
+          if (!context) {
+            reject(
+              new Error(
+                "Unable to process image."
+              )
+            );
+            return;
+          }
+
+          context.drawImage(
+            image,
+            0,
+            0,
+            width,
+            height
+          );
+
+          const compressedImage =
+            canvas.toDataURL(
+              "image/jpeg",
+              0.68
+            );
+
+          resolve(compressedImage);
+        };
+
+        image.onerror = () => {
+          reject(
+            new Error(
+              "Unable to process image."
+            )
+          );
+        };
+
+        image.src = event.target.result;
+      };
+
+      reader.onerror = () => {
+        reject(
+          new Error(
+            "Unable to read image."
+          )
+        );
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // =========================================================
   // BEFORE PHOTO
-  const handleBeforePhotoChange = (event) => {
+  // =========================================================
+
+  const handleBeforePhotoChange = async (
+    event
+  ) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
-    setBeforePhoto(file);
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image.");
+      event.target.value = "";
+      return;
+    }
 
-    const previewUrl = URL.createObjectURL(file);
-    setBeforePhotoPreview(previewUrl);
+    try {
+      const compressedImage =
+        await compressImage(file);
+
+      setBeforePhoto(file);
+
+      // Persistent data URL.
+      // NOT a temporary blob URL.
+      setBeforePhotoPreview(
+        compressedImage
+      );
+    } catch (error) {
+      console.error(
+        "Before photo error:",
+        error
+      );
+
+      alert(
+        "Unable to process the photo. Please try again."
+      );
+    }
+
+    event.target.value = "";
   };
 
   const removeBeforePhoto = () => {
@@ -82,16 +224,44 @@ export default function ReportIssue({
     setBeforePhotoPreview("");
   };
 
+  // =========================================================
   // AFTER PHOTO
-  const handleAfterPhotoChange = (event) => {
+  // =========================================================
+
+  const handleAfterPhotoChange = async (
+    event
+  ) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
-    setAfterPhoto(file);
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image.");
+      event.target.value = "";
+      return;
+    }
 
-    const previewUrl = URL.createObjectURL(file);
-    setAfterPhotoPreview(previewUrl);
+    try {
+      const compressedImage =
+        await compressImage(file);
+
+      setAfterPhoto(file);
+
+      setAfterPhotoPreview(
+        compressedImage
+      );
+    } catch (error) {
+      console.error(
+        "After photo error:",
+        error
+      );
+
+      alert(
+        "Unable to process the photo. Please try again."
+      );
+    }
+
+    event.target.value = "";
   };
 
   const removeAfterPhoto = () => {
@@ -99,14 +269,21 @@ export default function ReportIssue({
     setAfterPhotoPreview("");
   };
 
+  // =========================================================
   // LOCATION
-  const handleLocationSelect = (selectedLocation) => {
+  // =========================================================
+
+  const handleLocationSelect = (
+    selectedLocation
+  ) => {
     setLocation(selectedLocation);
   };
 
   const useMyLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by this browser.");
+      alert(
+        "Geolocation is not supported by this browser."
+      );
       return;
     }
 
@@ -130,7 +307,10 @@ export default function ReportIssue({
     );
   };
 
+  // =========================================================
   // ISSUE ID
+  // =========================================================
+
   const generateIssueId = () => {
     const randomNumber = Math.floor(
       1000 + Math.random() * 9000
@@ -141,17 +321,24 @@ export default function ReportIssue({
       .slice(-6)}-${randomNumber}`;
   };
 
+  // =========================================================
   // SUBMIT REPORT
+  // =========================================================
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!formData.category) {
-      alert("Please select an issue category.");
+      alert(
+        "Please select an issue category."
+      );
       return;
     }
 
     if (!formData.description.trim()) {
-      alert("Please describe the civic issue.");
+      alert(
+        "Please describe the civic issue."
+      );
       return;
     }
 
@@ -162,17 +349,42 @@ export default function ReportIssue({
       return;
     }
 
-    const newIssueId = generateIssueId();
+    // =======================================================
+    // WATER PHOTO REQUIREMENT
+    // =======================================================
+
+    if (
+      formData.category === "Water" &&
+      !beforePhotoPreview
+    ) {
+      alert(
+        "A before photo is required for water-related issues."
+      );
+      return;
+    }
+
+    const newIssueId =
+      generateIssueId();
 
     const newIssue = {
       id: newIssueId,
+
       title: formData.category,
+
       category: formData.category,
-      description: formData.description,
-      severity: formData.severity,
+
+      description:
+        formData.description.trim(),
+
+      severity:
+        formData.severity,
+
       status: "Reported",
+
       reporter:
-        formData.reporter || "Community Member",
+        formData.reporter.trim() ||
+        "Community Member",
+
       date: formData.date,
 
       location: [
@@ -180,46 +392,65 @@ export default function ReportIssue({
         location.lng,
       ],
 
+      // =====================================================
       // BEFORE EVIDENCE
-      photo: beforePhotoPreview || null,
-      beforePhoto: beforePhotoPreview || null,
+      // =====================================================
 
+      photo:
+        beforePhotoPreview || null,
+
+      beforePhoto:
+        beforePhotoPreview || null,
+
+      // =====================================================
       // FOLLOW-UP DATA
+      // =====================================================
+
       afterPhoto: null,
+
       actionTaken: "",
-      outcome: "Pending follow-up",
+
+      outcome:
+        "Pending follow-up",
     };
 
     try {
-  await addDoc(collection(db, "issues"), newIssue);
+      await addDoc(
+        collection(db, "issues"),
+        newIssue
+      );
 
-  if (onIssueSubmitted) {
-    onIssueSubmitted(newIssue);
-  }
+      if (onIssueSubmitted) {
+        onIssueSubmitted(newIssue);
+      }
 
-  setIssueId(newIssueId);
-  setSubmitted(true);
+      setIssueId(newIssueId);
 
-  window.scrollTo({
-    top:
-      document.getElementById("report")?.offsetTop - 100 || 0,
-    behavior: "smooth",
-  });
-} catch (error) {
-  console.error("Error saving report to Firebase:", error);
-  alert("Unable to save the report. Please try again.");
-}
+      setSubmitted(true);
 
-    window.scrollTo({
-      top:
-        document.getElementById(
-          "report"
-        )?.offsetTop - 100 || 0,
-      behavior: "smooth",
-    });
+      window.scrollTo({
+        top:
+          document.getElementById(
+            "report"
+          )?.offsetTop - 100 || 0,
+        behavior: "smooth",
+      });
+    } catch (error) {
+      console.error(
+        "Error saving report to Firebase:",
+        error
+      );
+
+      alert(
+        "Unable to save the report. Please try again."
+      );
+    }
   };
 
+  // =========================================================
   // SAVE FOLLOW-UP
+  // =========================================================
+
   const handleFollowUpSave = () => {
     if (!actionTaken.trim()) {
       alert(
@@ -237,9 +468,15 @@ export default function ReportIssue({
 
     const updatedIssue = {
       id: issueId,
-      afterPhoto: afterPhotoPreview,
-      actionTaken: actionTaken,
-      outcome: outcome,
+
+      afterPhoto:
+        afterPhotoPreview,
+
+      actionTaken:
+        actionTaken.trim(),
+
+      outcome,
+
       status:
         outcome === "Improved"
           ? "Improved"
@@ -253,7 +490,10 @@ export default function ReportIssue({
     setFollowUpSaved(true);
   };
 
+  // =========================================================
   // RESET
+  // =========================================================
+
   const resetForm = () => {
     setFormData({
       category: "",
@@ -272,15 +512,24 @@ export default function ReportIssue({
     setAfterPhotoPreview("");
 
     setActionTaken("");
-    setOutcome("Pending follow-up");
+
+    setOutcome(
+      "Pending follow-up"
+    );
 
     setLocation(null);
+
     setSubmitted(false);
+
     setIssueId("");
+
     setFollowUpSaved(false);
   };
 
+  // =========================================================
   // SUCCESS / FOLLOW-UP SCREEN
+  // =========================================================
+
   if (submitted) {
     return (
       <section
@@ -307,9 +556,10 @@ export default function ReportIssue({
             </h2>
 
             <p>
-              Your civic issue has been recorded
-              in CivicConnect. Keep this Issue ID
-              for the follow-up stage.
+              Your civic issue has been
+              recorded in CivicConnect.
+              Keep this Issue ID for the
+              follow-up stage.
             </p>
 
             <div className="issue-id-card">
@@ -325,11 +575,15 @@ export default function ReportIssue({
             </div>
 
             {/* REPORT JOURNEY */}
+
             <div className="issue-journey">
 
               <div className="journey-step active">
+
                 <div className="journey-icon">
-                  <CheckCircle2 size={18} />
+                  <CheckCircle2
+                    size={18}
+                  />
                 </div>
 
                 <div>
@@ -341,6 +595,7 @@ export default function ReportIssue({
                     Issue documented
                   </span>
                 </div>
+
               </div>
 
               <div className="journey-line"></div>
@@ -352,6 +607,7 @@ export default function ReportIssue({
                     : ""
                 }`}
               >
+
                 <div className="journey-icon">
                   <Clock3 size={18} />
                 </div>
@@ -365,6 +621,7 @@ export default function ReportIssue({
                     Document the action
                   </span>
                 </div>
+
               </div>
 
               <div className="journey-line"></div>
@@ -372,13 +629,17 @@ export default function ReportIssue({
               <div
                 className={`journey-step ${
                   followUpSaved &&
-                  outcome === "Improved"
+                  outcome ===
+                    "Improved"
                     ? "active"
                     : ""
                 }`}
               >
+
                 <div className="journey-icon">
-                  <CheckCircle2 size={18} />
+                  <CheckCircle2
+                    size={18}
+                  />
                 </div>
 
                 <div>
@@ -392,11 +653,13 @@ export default function ReportIssue({
                       : "Pending"}
                   </span>
                 </div>
+
               </div>
 
             </div>
 
             {/* FOLLOW-UP EVIDENCE */}
+
             {!followUpSaved ? (
               <div className="follow-up-card">
 
@@ -407,6 +670,7 @@ export default function ReportIssue({
                   </div>
 
                   <div>
+
                     <span className="section-eyebrow">
                       FOLLOW-UP EVIDENCE
                     </span>
@@ -416,16 +680,18 @@ export default function ReportIssue({
                     </h3>
 
                     <p>
-                      After action has been taken,
-                      document the change with an
-                      after photo and a short
-                      description.
+                      After action has been
+                      taken, document the change
+                      with an after photo and a
+                      short description.
                     </p>
+
                   </div>
 
                 </div>
 
                 {/* ACTION */}
+
                 <div className="follow-up-field">
 
                   <label htmlFor="actionTaken">
@@ -447,6 +713,7 @@ export default function ReportIssue({
                 </div>
 
                 {/* AFTER PHOTO */}
+
                 <div className="follow-up-field">
 
                   <label>
@@ -454,8 +721,9 @@ export default function ReportIssue({
                   </label>
 
                   <p className="field-help">
-                    Upload a new photo of the same
-                    location after the action.
+                    Upload a new photo of the
+                    same location after the
+                    action.
                   </p>
 
                   {!afterPhotoPreview ? (
@@ -464,6 +732,7 @@ export default function ReportIssue({
                       <input
                         type="file"
                         accept="image/*"
+                        capture="environment"
                         onChange={
                           handleAfterPhotoChange
                         }
@@ -476,7 +745,8 @@ export default function ReportIssue({
                       </strong>
 
                       <span>
-                        Show the result after action
+                        Show the result after
+                        action
                       </span>
 
                     </label>
@@ -484,7 +754,9 @@ export default function ReportIssue({
                     <div className="photo-preview">
 
                       <img
-                        src={afterPhotoPreview}
+                        src={
+                          afterPhotoPreview
+                        }
                         alt="After evidence preview"
                       />
 
@@ -505,6 +777,7 @@ export default function ReportIssue({
                 </div>
 
                 {/* OUTCOME */}
+
                 <div className="follow-up-field">
 
                   <label htmlFor="outcome">
@@ -520,21 +793,23 @@ export default function ReportIssue({
                       )
                     }
                   >
-                    <option>
+
+                    <option value="Pending follow-up">
                       Pending follow-up
                     </option>
 
-                    <option>
+                    <option value="Action Taken">
                       Action Taken
                     </option>
 
-                    <option>
+                    <option value="Improved">
                       Improved
                     </option>
 
-                    <option>
+                    <option value="Still Needs Attention">
                       Still Needs Attention
                     </option>
+
                   </select>
 
                 </div>
@@ -547,7 +822,9 @@ export default function ReportIssue({
                   }
                 >
                   Save Follow-up Evidence
-                  <ArrowRight size={18} />
+                  <ArrowRight
+                    size={18}
+                  />
                 </button>
 
               </div>
@@ -569,14 +846,15 @@ export default function ReportIssue({
                 </h3>
 
                 <p>
-                  The follow-up evidence has been
-                  recorded for this issue.
+                  The follow-up evidence has
+                  been recorded for this issue.
                 </p>
 
               </div>
             )}
 
             {/* ACTION BUTTONS */}
+
             <div className="success-actions">
 
               <button
@@ -593,7 +871,9 @@ export default function ReportIssue({
                 className="secondary-button"
                 onClick={() => {
                   document
-                    .getElementById("map")
+                    .getElementById(
+                      "map"
+                    )
                     ?.scrollIntoView({
                       behavior: "smooth",
                     });
@@ -612,7 +892,10 @@ export default function ReportIssue({
     );
   }
 
+  // =========================================================
   // REPORT FORM
+  // =========================================================
+
   return (
     <section
       className="report-section"
@@ -636,10 +919,10 @@ export default function ReportIssue({
 
             <p>
               Report a civic issue in your
-              neighbourhood. Add evidence, describe
-              the problem and mark its location so
-              the community can understand what
-              needs attention.
+              neighbourhood. Add evidence,
+              describe the problem and mark its
+              location so the community can
+              understand what needs attention.
             </p>
 
           </div>
@@ -663,7 +946,10 @@ export default function ReportIssue({
 
           <div className="form-grid">
 
-            {/* 01 CATEGORY */}
+            {/* =================================================
+                01 CATEGORY
+            ================================================= */}
+
             <div className="form-card">
 
               <div className="form-card-number">
@@ -684,10 +970,15 @@ export default function ReportIssue({
                 <select
                   id="category"
                   name="category"
-                  value={formData.category}
-                  onChange={handleChange}
+                  value={
+                    formData.category
+                  }
+                  onChange={
+                    handleChange
+                  }
                   required
                 >
+
                   <option value="">
                     Select issue category
                   </option>
@@ -702,12 +993,32 @@ export default function ReportIssue({
                       </option>
                     )
                   )}
+
                 </select>
 
+                {formData.category ===
+                  "Water" && (
+                  <p
+                    className="field-help"
+                    style={{
+                      marginTop: "10px",
+                      color: "#9a4b3f",
+                      fontWeight: 700,
+                    }}
+                  >
+                    A before photo is required
+                    for water-related reports.
+                  </p>
+                )}
+
               </div>
+
             </div>
 
-            {/* 02 SEVERITY */}
+            {/* =================================================
+                02 SEVERITY
+            ================================================= */}
+
             <div className="form-card">
 
               <div className="form-card-number">
@@ -742,7 +1053,8 @@ export default function ReportIssue({
                           setFormData(
                             (previous) => ({
                               ...previous,
-                              severity: option,
+                              severity:
+                                option,
                             })
                           )
                         }
@@ -756,9 +1068,13 @@ export default function ReportIssue({
                 </div>
 
               </div>
+
             </div>
 
-            {/* 03 DESCRIPTION */}
+            {/* =================================================
+                03 DESCRIPTION
+            ================================================= */}
+
             <div className="form-card form-card-wide">
 
               <div className="form-card-number">
@@ -773,24 +1089,33 @@ export default function ReportIssue({
 
                 <p className="field-help">
                   Explain the issue clearly.
-                  Mention anything that could help
-                  the community understand it.
+                  Mention anything that could
+                  help the community understand
+                  it.
                 </p>
 
                 <textarea
                   id="description"
                   name="description"
-                  value={formData.description}
-                  onChange={handleChange}
+                  value={
+                    formData.description
+                  }
+                  onChange={
+                    handleChange
+                  }
                   placeholder="Example: Garbage has been accumulating beside the road for several days..."
                   rows="6"
                   required
                 />
 
               </div>
+
             </div>
 
-            {/* 04 BEFORE PHOTO */}
+            {/* =================================================
+                04 BEFORE PHOTO
+            ================================================= */}
+
             <div className="form-card">
 
               <div className="form-card-number">
@@ -801,11 +1126,25 @@ export default function ReportIssue({
 
                 <label>
                   Before photo
+                  {formData.category ===
+                    "Water" && (
+                    <span
+                      style={{
+                        color: "#b24d42",
+                        marginLeft: "5px",
+                      }}
+                    >
+                      *
+                    </span>
+                  )}
                 </label>
 
                 <p className="field-help">
-                  Capture the civic problem before
-                  any action is taken.
+                  Capture the civic problem
+                  before any action is taken.
+                  {formData.category ===
+                    "Water" &&
+                    " Required for water-related issues."}
                 </p>
 
                 {!beforePhotoPreview ? (
@@ -814,6 +1153,7 @@ export default function ReportIssue({
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       onChange={
                         handleBeforePhotoChange
                       }
@@ -834,7 +1174,9 @@ export default function ReportIssue({
                   <div className="photo-preview">
 
                     <img
-                      src={beforePhotoPreview}
+                      src={
+                        beforePhotoPreview
+                      }
                       alt="Before civic issue evidence"
                     />
 
@@ -853,9 +1195,13 @@ export default function ReportIssue({
                 )}
 
               </div>
+
             </div>
 
-            {/* 05 REPORTER */}
+            {/* =================================================
+                05 REPORTER
+            ================================================= */}
+
             <div className="form-card">
 
               <div className="form-card-number">
@@ -877,17 +1223,25 @@ export default function ReportIssue({
                   id="reporter"
                   name="reporter"
                   type="text"
-                  value={formData.reporter}
-                  onChange={handleChange}
+                  value={
+                    formData.reporter
+                  }
+                  onChange={
+                    handleChange
+                  }
                   placeholder="Your name"
                 />
 
               </div>
+
             </div>
 
           </div>
 
-          {/* 06 LOCATION */}
+          {/* =================================================
+              06 LOCATION
+          ================================================= */}
+
           <div className="location-card">
 
             <div className="location-card-heading">
@@ -917,7 +1271,9 @@ export default function ReportIssue({
               <button
                 type="button"
                 className="location-button"
-                onClick={useMyLocation}
+                onClick={
+                  useMyLocation
+                }
               >
                 <Navigation size={16} />
                 Use My Location
@@ -927,7 +1283,9 @@ export default function ReportIssue({
 
             <IssueMap
               selectable={true}
-              selectedLocation={location}
+              selectedLocation={
+                location
+              }
               onLocationSelect={
                 handleLocationSelect
               }
@@ -941,8 +1299,13 @@ export default function ReportIssue({
                 <span>
                   Location selected:{" "}
                   <strong>
-                    {location.lat.toFixed(5)},{" "}
-                    {location.lng.toFixed(5)}
+                    {location.lat.toFixed(
+                      5
+                    )}
+                    ,{" "}
+                    {location.lng.toFixed(
+                      5
+                    )}
                   </strong>
                 </span>
 
@@ -951,15 +1314,21 @@ export default function ReportIssue({
 
           </div>
 
-          {/* SUBMIT */}
+          {/* =================================================
+              SUBMIT
+          ================================================= */}
+
           <div className="form-submit-area">
 
             <div className="privacy-note">
+
               <span>◎</span>
 
               Focus on civic problems, not
-              individuals. Please avoid uploading
-              identifiable personal information.
+              individuals. Please avoid
+              uploading identifiable personal
+              information.
+
             </div>
 
             <button
@@ -978,6 +1347,10 @@ export default function ReportIssue({
     </section>
   );
 }
+
+// =============================================================
+// SHIELD ICON
+// =============================================================
 
 function ShieldIcon() {
   return (
