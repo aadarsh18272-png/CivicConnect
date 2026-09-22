@@ -13,6 +13,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+
 import IssueMap from "./components/IssueMap";
 import ReportIssue from "./components/ReportIssue";
 import "./App.css";
@@ -25,87 +26,6 @@ import WorkerDashboard from "./components/WorkerDashboard";
 
 const ADMIN_UID = "atjG8XxUd0WxzFIxfzzVXSCjtug2";
 
-const initialIssues = [
-  {
-    id: "CC-001",
-    title: "Garbage dumping",
-    category: "Waste & Garbage",
-    description:
-      "Garbage has been dumped beside the roadside and needs proper disposal.",
-    status: "Reported",
-    severity: "High",
-    reporter: "Community Member",
-    date: "2026-09-08",
-    location: [28.6139, 77.209],
-    photo: null,
-  },
-  {
-    id: "CC-002",
-    title: "Potholes",
-    category: "Road & Footpath",
-    description:
-      "A damaged section of the footpath is creating difficulty for pedestrians.",
-    status: "Under Review",
-    severity: "Medium",
-    reporter: "Community Member",
-    date: "2026-09-08",
-    location: [28.6165, 77.21],
-    photo: null,
-  },
-  {
-    id: "CC-003",
-    title: "Streetlight issue",
-    category: "Streetlight",
-    description:
-      "A streetlight is not functioning properly in this area.",
-    status: "Reported",
-    severity: "Medium",
-    reporter: "Community Member",
-    date: "2026-09-08",
-    location: [28.6112, 77.215],
-    photo: null,
-  },
-  {
-    id: "CC-004",
-    title: "Drainage issue",
-    category: "Drainage",
-    description:
-      "A damaged or leaking drainage section is affecting the surrounding public area.",
-    status: "Reported",
-    severity: "High",
-    reporter: "Community Member",
-    date: "2026-09-08",
-    location: [28.6148, 77.2125],
-    photo: null,
-  },
-  {
-    id: "CC-005",
-    title: "Water supply issue",
-    category: "Water & Supply",
-    description:
-      "A public water supply point is damaged or not functioning properly and needs attention.",
-    status: "Reported",
-    severity: "Medium",
-    reporter: "Community Member",
-    date: "2026-09-09",
-    location: [28.6172, 77.2138],
-    photo: null,
-  },
-  {
-    id: "CC-006",
-    title: "Damaged Footpath",
-    category: "Road & Footpath",
-    description:
-      "The footpath is broken or uneven, making it difficult and unsafe for pedestrians.",
-    status: "Reported",
-    severity: "High",
-    reporter: "Community Member",
-    date: "2026-09-09",
-    location: [28.618, 77.214],
-    photo: null,
-  },
-];
-
 function App() {
   const [issues, setIssues] = useState(() => {
     try {
@@ -114,43 +34,21 @@ function App() {
       if (savedIssues) {
         const parsedIssues = JSON.parse(savedIssues);
 
-        const savedIds = new Set(
-          parsedIssues.map((issue) => issue.id)
-        );
-
-        const missingDemoIssues = initialIssues.filter(
-          (issue) => !savedIds.has(issue.id)
-        );
-
-        const allIssues = [
-          ...parsedIssues,
-          ...missingDemoIssues,
-        ];
-
-        const updatedIssues = allIssues.map((issue) =>
-          issue.id === "CC-002"
-            ? {
-                ...issue,
-                title: "Potholes",
-              }
-            : issue
-        );
-
-        return updatedIssues.filter(
+        return parsedIssues.filter(
           (issue) =>
             issue.id !== "CC-337444-1772" &&
             issue.id !== "CC-107005-1745"
         );
       }
 
-      return initialIssues;
+      return [];
     } catch (error) {
       console.error(
         "Unable to load saved CivicConnect issues:",
         error
       );
 
-      return initialIssues;
+      return [];
     }
   });
 
@@ -164,7 +62,7 @@ function App() {
   const [showWorkerLogin, setShowWorkerLogin] = useState(false);
   const [workerUser, setWorkerUser] = useState(null);
 
-  // Save issues whenever the issue list changes
+  // Save issues locally whenever the issue list changes
   useEffect(() => {
     try {
       localStorage.setItem(
@@ -180,6 +78,8 @@ function App() {
   }, [issues]);
 
   // LIVE FIRESTORE REPORTS
+  // Firestore is the source of truth.
+  // No demo issues are added here.
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "issues"),
@@ -187,22 +87,12 @@ function App() {
         const firestoreIssues = snapshot.docs.map(
           (issueDoc) => ({
             id: issueDoc.id,
+            firestoreId: issueDoc.id,
             ...issueDoc.data(),
           })
         );
 
-        const firestoreIds = new Set(
-          firestoreIssues.map((issue) => issue.id)
-        );
-
-        const demoIssues = initialIssues.filter(
-          (issue) => !firestoreIds.has(issue.id)
-        );
-
-        setIssues([
-          ...demoIssues,
-          ...firestoreIssues,
-        ]);
+        setIssues(firestoreIssues);
       },
       (error) => {
         console.error(
@@ -258,16 +148,16 @@ function App() {
   }
 
   if (workerUser) {
-  return (
-    <WorkerDashboard
-      user={workerUser}
-      onLogout={() => {
-        setWorkerUser(null);
-        setShowWorkerLogin(false);
-      }}
-    />
-  );
-}
+    return (
+      <WorkerDashboard
+        user={workerUser}
+        onLogout={() => {
+          setWorkerUser(null);
+          setShowWorkerLogin(false);
+        }}
+      />
+    );
+  }
 
   return showWorkerLogin ? (
     <div className="admin-page">
@@ -312,12 +202,12 @@ function App() {
     </div>
   ) : (
     <div>
-      {/* DEMO DATA BAR */}
+      {/* CIVICCONNECT STATUS BAR */}
       <div className="demo-bar">
         <span className="demo-dot"></span>
-        DEMO DATA
+        CIVICCONNECT
         <span className="demo-separator">•</span>
-        CivicConnect Community Engagement Project
+        Community Engagement Project
       </div>
 
       {/* NAVBAR */}
@@ -685,7 +575,7 @@ function App() {
 
                   <div className="live-indicator">
                     <span></span>
-                    DEMO
+                    LIVE
                   </div>
                 </div>
 
@@ -779,10 +669,12 @@ function App() {
 
                     <div>
                       <strong>
-                        {issues.filter(
-                          (issue) =>
-                            issue.status === "Improved"
-                        ).length}
+                        {
+                          issues.filter(
+                            (issue) =>
+                              issue.status === "Improved"
+                          ).length
+                        }
                       </strong>
 
                       <span>
@@ -878,78 +770,56 @@ function App() {
             </div>
 
             <div className="process-grid">
-              {[
-                {
-                  number: "01",
-                  title: "Observe",
-                  text: "Identify visible civic problems in the neighbourhood.",
-                  detail:
-                    "Start by noticing issues that affect safety, cleanliness, accessibility or everyday public life. Observation is the first step because a problem must be understood before it can be documented responsibly.",
-                  target: "issues",
-                  action: "Explore Civic Issues",
-                },
-                {
-                  number: "02",
-                  title: "Document",
-                  text: "Capture photographs, locations and relevant details.",
-                  detail:
-                    "Record the issue with clear evidence, useful descriptions and location information. CivicConnect keeps documentation focused on the problem rather than publicly identifying or shaming individuals.",
-                  target: "report",
-                  action: "Report an Issue",
-                },
-                {
-                  number: "03",
-                  title: "Engage",
-                  text: "Understand concerns and interact with the community.",
-                  detail:
-                    "Community engagement adds context to field observations. Listening to residents and understanding local concerns helps connect digital reporting with real neighbourhood experiences.",
-                  target: "community",
-                  action: "Hear Community Voice",
-                },
-                {
-                  number: "04",
-                  title: "Act",
-                  text: "Promote responsible behaviour and practical action.",
-                  detail:
-                    "The goal is not only to record problems. Responsible civic behaviour, awareness and practical follow-up can help turn an observation into meaningful action.",
-                  target: "civic-sense",
-                  action: "Explore Civic Sense",
-                },
-                {
-                  number: "05",
-                  title: "Improve",
-                  text: "Follow up and document the actual outcome.",
-                  detail:
-                    "Follow-up makes the project measurable. When an issue changes, the platform can document the action taken, supporting evidence and reported outcome without claiming an unverified government resolution.",
-                  target: "dashboard",
-                  action: "View Dashboard",
-                },
-              ].map((step) => (
-                <button
-                  className="process-card"
-                  key={step.number}
-                  type="button"
-                  onClick={() => setSelectedJourney(step)}
-                  aria-label={`Open ${step.title} step details`}
-                >
-                  <span className="process-number">
-                    {step.number}
-                  </span>
+  {[
+  {
+    "number": "01",
+    "title": "Garbage & Littering",
+    "text": "Improper disposal and accumulated waste.",
+    "image": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Litter_bin_rubbish_Tottenham,_London,_England_1.jpg"
+  },
+  {
+    "number": "02",
+    "title": "Roads & Potholes",
+    "text": "Damaged roads and unsafe surfaces.",
+    "image": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Potholes_on_road.jpg"
+  },
+  {
+    "number": "03",
+    "title": "Footpaths",
+    "text": "Accessibility and pedestrian issues.",
+    "image": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Damaged_footpath_in_India.jpg"
+  },
+  {
+    "number": "04",
+    "title": "Streetlights",
+    "text": "Broken or non-functional lighting.",
+    "image": "https://commons.wikimedia.org/wiki/Special:Redirect/file/Street_light_in_India.jpg"
+  }
+].map((step) => (
+    <button
+      className="process-card"
+      key={step.number}
+      type="button"
+      onClick={() => setSelectedJourney(step)}
+      aria-label={`Open ${step.title} step details`}
+    >
+      <span className="process-number">
+        {step.number}
+      </span>
 
-                  <div className="process-line"></div>
+      <div className="process-line"></div>
 
-                  <h3>{step.title}</h3>
+      <h3>{step.title}</h3>
 
-                  <p>{step.text}</p>
+      <p>{step.text}</p>
 
-                  <ArrowRight
-                    className="process-arrow"
-                    size={19}
-                  />
-                </button>
-              ))}
-            </div>
-
+      <ArrowRight
+        className="process-arrow"
+        size={19}
+      />
+    </button>
+  ))}
+</div>
             {selectedJourney && (
               <div
                 className="journey-modal-backdrop"
@@ -1034,94 +904,110 @@ function App() {
         </section>
 
         {/* ISSUES */}
-        <section
-          className="issues-section"
-          id="issues"
+        {/* ISSUES */}
+<section
+  className="issues-section"
+  id="issues"
+>
+  <div className="section-container">
+    <div className="section-heading centered">
+      <span className="section-kicker">
+        CIVIC OBSERVATIONS
+      </span>
+
+      <h2>
+        Understand the problems
+        <br />
+        <span>around us.</span>
+      </h2>
+
+      <p>
+        Explore the categories of civic infrastructure
+        and civic-sense issues documented through
+        fieldwork.
+      </p>
+    </div>
+
+    <div className="issue-grid civic-visual-issues">
+      {[
+        {
+          number: "01",
+          title: "Garbage & Littering",
+          text: "Improper disposal and accumulated waste.",
+          image: "/issue-images/garbage.jpg",
+        },
+        {
+          number: "02",
+          title: "Roads & Potholes",
+          text: "Damaged roads and unsafe surfaces.",
+          image: "/issue-images/potholes.jpg",
+        },
+        {
+          number: "03",
+          title: "Footpaths",
+          text: "Accessibility and pedestrian issues.",
+          image: "/issue-images/footpaths.jpg",
+        },
+        {
+          number: "04",
+          title: "Streetlights",
+          text: "Broken or non-functional lighting.",
+          image: "/issue-images/streetlights.jpg",
+        },
+        {
+          number: "05",
+          title: "Water & Drainage",
+          text: "Leakage and drainage-related concerns.",
+          image: "/issue-images/drainage.png",
+        },
+        {
+          number: "06",
+          title: "Cleanliness",
+          text: "Public-space cleanliness problems.",
+          image: "/issue-images/cleanliness.jpg",
+        },
+      ].map((issue) => (
+        <article
+          className="civic-issue-image-card"
+          key={issue.number}
+          style={{
+            backgroundImage: `url(${issue.image})`,
+          }}
         >
-          <div className="section-container">
-            <div className="section-heading centered">
-              <span className="section-kicker">
-                CIVIC OBSERVATIONS
-              </span>
+          <div className="civic-issue-overlay"></div>
 
-              <h2>
-                Understand the problems
-                <br />
-                <span>around us.</span>
-              </h2>
+          <div className="civic-issue-top">
+            <span className="civic-issue-number">
+              {issue.number}
+            </span>
 
-              <p>
-                Explore the categories of civic infrastructure
-                and civic-sense issues documented through
-                fieldwork.
-              </p>
-            </div>
-
-            <div className="issue-grid">
-              {[
-                [
-                  "01",
-                  "Garbage & Littering",
-                  "Improper disposal and accumulated waste.",
-                ],
-                [
-                  "02",
-                  "Roads & Potholes",
-                  "Damaged roads and unsafe surfaces.",
-                ],
-                [
-                  "03",
-                  "Footpaths",
-                  "Accessibility and pedestrian issues.",
-                ],
-                [
-                  "04",
-                  "Streetlights",
-                  "Broken or non-functional lighting.",
-                ],
-                [
-                  "05",
-                  "Water & Drainage",
-                  "Leakage and drainage-related concerns.",
-                ],
-                [
-                  "06",
-                  "Cleanliness",
-                  "Public-space cleanliness problems.",
-                ],
-              ].map(
-                ([number, title, text]) => (
-                  <div
-                    className="issue-card"
-                    key={number}
-                  >
-                    <span className="issue-number">
-                      {number}
-                    </span>
-
-                    <div className="issue-icon">
-                      <MapPin size={21} />
-                    </div>
-
-                    <h3>{title}</h3>
-
-                    <p>{text}</p>
-
-                    <button
-                      onClick={() =>
-                        scrollToSection("report")
-                      }
-                    >
-                      Explore
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                )
-              )}
-            </div>
+            <span className="civic-issue-pin">
+              <MapPin size={17} />
+            </span>
           </div>
-        </section>
 
+          <div className="civic-issue-content">
+            <span className="civic-issue-label">
+              CIVIC ISSUE
+            </span>
+
+            <h3>{issue.title}</h3>
+
+            <p>{issue.text}</p>
+
+            <button
+              type="button"
+              onClick={() => scrollToSection("report")}
+            >
+              <span>Explore Issue</span>
+              <ArrowRight size={17} />
+            </button>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
         {/* CIVIC MAP */}
         <section
           className="map-section"

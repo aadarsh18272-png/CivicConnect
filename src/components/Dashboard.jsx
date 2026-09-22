@@ -1,9 +1,3 @@
-import garbageIllustration from "../assets/image.png";
-import potholeIllustration from "../assets/Pothole_-_The_Noun_Project.svg.webp";
-import streetlightIllustration from "../assets/Illustration_-_Street_Light_(Single).svg.webp";
-import drainageIllustration from "../assets/Sewer_system_leak.svg.webp";
-import waterIllustration from "../assets/Water_tap_with_handle_Pinhead_icon.svg.webp";
-import damagedFootpathImage from "../assets/damaged-footpath.jpg";
 import { useEffect, useMemo, useState } from "react";
 import {
   BarChart3,
@@ -24,44 +18,16 @@ export default function Dashboard({ issues = [] }) {
   poll: null,
   suggestions: [],
 });
-const [feedbackData, setFeedbackData] = useState({
-  websiteRating: 0,
-  serviceRating: 0,
-  feedback: "",
-});
 useEffect(() => {
   const loadCommunityData = () => {
-    const savedPoll = localStorage.getItem(
-      "civicconnect_community_poll"
-    );
-
+    const savedPoll = localStorage.getItem("civicconnect_community_poll");
     const savedSuggestions = localStorage.getItem(
       "civicconnect_community_suggestions"
     );
 
-    const savedWebsiteRating = localStorage.getItem(
-      "civicconnect_website_rating"
-    );
-
-    const savedServiceRating = localStorage.getItem(
-      "civicconnect_service_rating"
-    );
-
-    const savedFeedback = localStorage.getItem(
-      "civicconnect_feedback"
-    );
-
     setCommunityData({
       poll: savedPoll ? JSON.parse(savedPoll) : null,
-      suggestions: savedSuggestions
-        ? JSON.parse(savedSuggestions)
-        : [],
-    });
-
-    setFeedbackData({
-      websiteRating: Number(savedWebsiteRating) || 0,
-      serviceRating: Number(savedServiceRating) || 0,
-      feedback: savedFeedback || "",
+      suggestions: savedSuggestions ? JSON.parse(savedSuggestions) : [],
     });
   };
 
@@ -159,19 +125,6 @@ useEffect(() => {
     (sum, option) => sum + option.votes,
     0
   ) || 0;
-
-  const websiteRating = feedbackData.websiteRating;
-const serviceRating = feedbackData.serviceRating;
-
-const averageRating =
-  websiteRating && serviceRating
-    ? ((websiteRating + serviceRating) / 2).toFixed(1)
-    : websiteRating || serviceRating || 0;
-
-const hasFeedback =
-  websiteRating > 0 ||
-  serviceRating > 0 ||
-  feedbackData.feedback.trim();
 
   const highPriority = issues.filter(
     (issue) => issue.severity === "High"
@@ -475,61 +428,6 @@ const hasFeedback =
       ))}
   </div>
 )}
-</div>
-
-{/* FEEDBACK & RATINGS */}
-
-<div className="dashboard-panel dashboard-feedback-panel">
-
-  <div className="dashboard-panel-heading">
-    <div>
-      <span>FEEDBACK</span>
-      <h3>Community Experience</h3>
-    </div>
-
-    <span className="dashboard-feedback-score">
-      ★ {averageRating || "—"}
-    </span>
-  </div>
-
-  {hasFeedback ? (
-    <>
-      <div className="dashboard-feedback-stats">
-
-        <div className="dashboard-feedback-stat">
-          <strong>
-            {websiteRating || "—"}
-          </strong>
-          <span>Website Rating</span>
-        </div>
-
-        <div className="dashboard-feedback-stat">
-          <strong>
-            {serviceRating || "—"}
-          </strong>
-          <span>Reporting Rating</span>
-        </div>
-
-      </div>
-
-      {feedbackData.feedback && (
-        <div className="dashboard-feedback-comment">
-
-          <span>RECENT FEEDBACK</span>
-
-          <p>
-            “{feedbackData.feedback}”
-          </p>
-
-        </div>
-      )}
-    </>
-  ) : (
-    <div className="dashboard-feedback-empty">
-      <span>No feedback submitted yet.</span>
-    </div>
-  )}
-
 </div>
 
           {/* STATUS */}
@@ -842,192 +740,337 @@ function IssueReportCard({
   issue,
   onOpen,
 }) {
-  const beforePhoto =
-    issue.beforePhoto ||
-    issue.photo;
+  const beforePhoto = issue.beforePhoto || issue.photo;
 
-  const afterPhoto =
-    issue.afterPhoto;
+  const status = issue.status || "Reported";
+  const severity = issue.severity || "Medium";
+  const category = issue.category || "Civic Issue";
+  const title = issue.title || "Untitled Civic Issue";
+  const description =
+    issue.description ||
+    "No description has been provided for this complaint.";
+
+  const locationText = Array.isArray(issue.location)
+    ? `${Number(issue.location[0]).toFixed(5)}, ${Number(
+        issue.location[1]
+      ).toFixed(5)}`
+    : "Location recorded";
+
+  const statusClass = status
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  const severityClass = getSeverityClass(severity);
 
   return (
-    <article className="issue-report-card">
+    <article
+      className="issue-report-card"
+      style={{
+        background: "#ffffff",
+        border: "1px solid #e5e9e6",
+        borderRadius: "22px",
+        overflow: "hidden",
+        boxShadow: "0 10px 30px rgba(20, 35, 25, 0.07)",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100%",
+        transition:
+          "transform 0.2s ease, box-shadow 0.2s ease",
+      }}
+    >
+      {beforePhoto ? (
+        <div
+          style={{
+            height: "190px",
+            background: "#edf1ed",
+            overflow: "hidden",
+          }}
+        >
+          <img
+            src={beforePhoto}
+            alt={title}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            height: "92px",
+            background:
+              "linear-gradient(135deg, #eef5ef 0%, #f8faf8 100%)",
+            borderBottom: "1px solid #e5e9e6",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 22px",
+          }}
+        >
+          <div>
+            <span
+              style={{
+                display: "block",
+                fontSize: "10px",
+                fontWeight: 800,
+                letterSpacing: "0.12em",
+                color: "#688070",
+                marginBottom: "5px",
+              }}
+            >
+              CIVIC REPORT
+            </span>
 
-      <div className="issue-report-image-area">
+            <strong
+              style={{
+                fontSize: "13px",
+                color: "#253229",
+              }}
+            >
+              {issue.id}
+            </strong>
+          </div>
 
-        {beforePhoto ? (
-  <img
-    src={beforePhoto}
-    alt={`Before evidence for ${issue.title}`}
-  />
-) : issue.id === "CC-001" ? (
-  <div className="issue-demo-image">
-    <img
-      src={garbageIllustration}
-      alt="Illustration of a garbage dumping issue"
-    />
-    <span>DEMO ILLUSTRATION</span>
-  </div>
-) : issue.id === "CC-002" ? (
-  <div className="issue-demo-image">
-    <img
-      src={potholeIllustration}
-      alt="Illustration of potholes"
-    />
-    <span>DEMO ILLUSTRATION</span>
-  </div>
-) : issue.id === "CC-003" ? (
-  <div className="issue-demo-image">
-    <img
-      src={streetlightIllustration}
-      alt="Illustration of a streetlight issue"
-    />
-    <span>DEMO ILLUSTRATION</span>
-  </div>
-) : issue.id === "CC-004" ? (
-  <div className="issue-demo-image">
-    <img
-      src={drainageIllustration}
-      alt="Illustration of a drainage issue"
-    />
-    <span>DEMO ILLUSTRATION</span>
-  </div>
-) : issue.id === "CC-005" ? (
-  <div className="issue-demo-image">
-    <img
-      src={waterIllustration}
-      alt="Illustration of a water supply issue"
-    />
-    <span>DEMO ILLUSTRATION</span>
-  </div>
-  ) : issue.id === "CC-006" ? (
-  <div className="issue-demo-image">
-    <img
-      src={damagedFootpathImage}
-      alt="Damaged and cracked footpath"
-    />
-    <span>DEMO ILLUSTRATION</span>
-  </div>
-) : (
-  <div className="issue-no-image">
-    <ImageIcon size={25} />
-    <span>No photo</span>
-  </div>
-)}
-        <div className="issue-card-badges">
+          <div
+            style={{
+              width: "42px",
+              height: "42px",
+              borderRadius: "13px",
+              background: "#ffffff",
+              border: "1px solid #dce6de",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#4b765a",
+            }}
+          >
+            <FileText size={19} />
+          </div>
+        </div>
+      )}
+
+      <div
+        style={{
+          padding: "22px",
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "10px",
+            marginBottom: "15px",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              background: "#f0f5f1",
+              color: "#477055",
+              fontSize: "10px",
+              fontWeight: 800,
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
+            }}
+          >
+            {category}
+          </span>
 
           <span
-            className={`issue-card-severity ${getSeverityClass(
-              issue.severity
-            )}`}
+            className={`issue-card-status ${statusClass}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              background:
+                status === "Improved"
+                  ? "#eaf6ed"
+                  : status === "Under Review"
+                  ? "#fff5df"
+                  : "#f1f3f2",
+              color:
+                status === "Improved"
+                  ? "#2d7042"
+                  : status === "Under Review"
+                  ? "#9a691e"
+                  : "#59645d",
+              fontSize: "10px",
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+            }}
           >
-            {issue.severity}
+            <span
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "currentColor",
+              }}
+            />
+            {status}
           </span>
-
-          <span className="issue-card-status">
-            {issue.status}
-          </span>
-
         </div>
 
-      </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "14px",
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <span
+              style={{
+                display: "block",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#87928a",
+                marginBottom: "6px",
+              }}
+            >
+              {issue.id}
+            </span>
 
+            <h4
+              style={{
+                margin: 0,
+                color: "#172019",
+                fontSize: "21px",
+                lineHeight: 1.2,
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {title}
+            </h4>
+          </div>
 
-      <div className="issue-report-content">
-
-        <div className="issue-report-id">
-          {issue.id}
+          <span
+            className={`issue-card-severity ${severityClass}`}
+            style={{
+              flexShrink: 0,
+              padding: "6px 9px",
+              borderRadius: "8px",
+              background:
+                severity === "High"
+                  ? "#fff0ee"
+                  : severity === "Medium"
+                  ? "#fff7e8"
+                  : "#edf7ef",
+              color:
+                severity === "High"
+                  ? "#a64035"
+                  : severity === "Medium"
+                  ? "#9b6b22"
+                  : "#477456",
+              fontSize: "10px",
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+            }}
+          >
+            {severity}
+          </span>
         </div>
 
-        <h4>
-          {issue.title}
-        </h4>
-
-        <p>
-          {issue.description}
+        <p
+          style={{
+            margin: "14px 0 18px",
+            color: "#66716a",
+            fontSize: "13px",
+            lineHeight: 1.65,
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {description}
         </p>
 
+        <div
+          style={{
+            marginTop: "auto",
+            paddingTop: "15px",
+            borderTop: "1px solid #edf0ed",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "9px",
+              color: "#5d6a62",
+              fontSize: "12px",
+              fontWeight: 700,
+            }}
+          >
+            <MapPin size={16} />
+            <span
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {locationText}
+            </span>
+          </div>
 
-        <div className="issue-report-meta">
-
-          <span>
-            <MapPin size={14} />
-            {Array.isArray(issue.location)
-              ? `${issue.location[0].toFixed(
-                  4
-                )}, ${issue.location[1].toFixed(
-                  4
-                )}`
-              : "Location recorded"}
-          </span>
-
-          <span>
-            {issue.category}
-          </span>
-
+          {issue.date && (
+            <div
+              style={{
+                marginTop: "8px",
+                color: "#89938c",
+                fontSize: "11px",
+                fontWeight: 600,
+              }}
+            >
+              Reported on {issue.date}
+            </div>
+          )}
         </div>
-
-
-        <div className="issue-report-divider"></div>
-
-
-        <div className="issue-report-progress">
-
-  <div
-    className={
-      beforePhoto
-        ? "evidence-done"
-        : ""
-    }
-  >
-    <span>
-      {beforePhoto ? "✓" : "○"}
-    </span>
-
-    Before Evidence
-  </div>
-
-  <div
-    className={
-      afterPhoto
-        ? "evidence-done"
-        : ""
-    }
-  >
-    <span>
-      {afterPhoto ? "✓" : "○"}
-    </span>
-
-    After Evidence
-  </div>
-
-  <div
-    className={
-      issue.actionTaken
-        ? "evidence-done"
-        : ""
-    }
-  >
-    <span>
-      {issue.actionTaken ? "✓" : "○"}
-    </span>
-
-    Action
-  </div>
-
-</div>
-
 
         <button
           type="button"
-          className="issue-view-button"
           onClick={onOpen}
+          style={{
+            marginTop: "18px",
+            width: "100%",
+            border: "none",
+            borderRadius: "12px",
+            padding: "12px 14px",
+            background: "#183c28",
+            color: "#ffffff",
+            fontFamily: "inherit",
+            fontSize: "12px",
+            fontWeight: 800,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "10px",
+          }}
         >
-          View Full Report
-          <span>→</span>
+          <span>View Complaint</span>
+          <span style={{ fontSize: "18px", lineHeight: 1 }}>
+            →
+          </span>
         </button>
-
       </div>
-
     </article>
   );
 }
