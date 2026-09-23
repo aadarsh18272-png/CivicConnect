@@ -82,7 +82,9 @@ const [serviceRating, setServiceRating] = useState(() => {
   }
 });
 
-const [feedback, setFeedback] = useState(() => {
+const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  const [feedback, setFeedback] = useState(() => {
   try {
     return (
       localStorage.getItem(
@@ -439,22 +441,8 @@ const [feedback, setFeedback] = useState(() => {
                 maxLength={500}
               />
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  alignItems: "center",
-                  gap: "12px",
-                }}
-              >
-
-                <span
-                  style={{
-                    color: "#91a897",
-                    fontSize: "10px",
-                  }}
-                >
+              <div className="community-form-footer">
+                <span className="community-character-count">
                   {suggestion.length}/500
                 </span>
 
@@ -713,9 +701,9 @@ const [feedback, setFeedback] = useState(() => {
                     "civicconnect_feedback",
                     feedback.trim()
                   );
-
-                  alert(
-                    "Thank you! Your feedback has been saved."
+                  setFeedbackSubmitted(true);
+                  window.dispatchEvent(
+                    new Event("civicconnect-community-updated")
                   );
                 }}
               >
@@ -724,6 +712,13 @@ const [feedback, setFeedback] = useState(() => {
               </button>
 
             </div>
+
+            {feedbackSubmitted && (
+              <div className="community-feedback-success" role="status">
+                <CheckCircle2 size={17} />
+                <span>Thank you — your feedback has been saved.</span>
+              </div>
+            )}
 
           </div>
 

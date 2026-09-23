@@ -1,13 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
+
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
+  ArrowUpRight,
   Camera,
+  Check,
   CheckCircle2,
+  ChevronRight,
+  ClipboardCheck,
   Clock3,
   FileText,
+  HardHat,
+  Image as ImageIcon,
   LogOut,
   MapPin,
+  Radio,
   Save,
   ShieldCheck,
   UserRound,
@@ -27,11 +36,16 @@ import { signOut } from "firebase/auth";
 
 import { auth, db } from "../firebase";
 
-function WorkerDashboard({ user, onLogout }) {
-  const [issues, setIssues] = useState([]);
-  const [workerProfile, setWorkerProfile] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+function WorkerDashboard({ user, onLogout }) {
+
+  const [issues, setIssues] = useState([]);
+  const [workerProfile, setWorkerProfile] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
   const [profileLoading, setProfileLoading] =
     useState(true);
 
@@ -39,7 +53,6 @@ function WorkerDashboard({ user, onLogout }) {
     useState(null);
 
   const [error, setError] = useState("");
-  const [actionId, setActionId] = useState("");
 
   const [observation, setObservation] =
     useState("");
@@ -47,32 +60,40 @@ function WorkerDashboard({ user, onLogout }) {
   const [actionTaken, setActionTaken] =
     useState("");
 
-  const [outcome, setOutcome] = useState(
-    "Pending follow-up"
-  );
+  const [outcome, setOutcome] =
+    useState("Pending follow-up");
 
   const [afterPhoto, setAfterPhoto] =
     useState("");
 
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] =
+    useState(false);
 
-  // =========================================================
-  // LOAD WORKER PROFILE
-  // =========================================================
+
+  /* =====================================================
+     LOAD WORKER PROFILE
+  ===================================================== */
 
   useEffect(() => {
+
     if (!user?.uid) return;
 
     const unsubscribe = onSnapshot(
       doc(db, "workers", user.uid),
+
       (snapshot) => {
+
         if (snapshot.exists()) {
-          setWorkerProfile(snapshot.data());
+          setWorkerProfile(
+            snapshot.data()
+          );
         }
 
         setProfileLoading(false);
       },
+
       (snapshotError) => {
+
         console.error(
           "Worker profile error:",
           snapshotError
@@ -87,13 +108,16 @@ function WorkerDashboard({ user, onLogout }) {
     );
 
     return () => unsubscribe();
+
   }, [user]);
 
-  // =========================================================
-  // LOAD ASSIGNED ISSUES
-  // =========================================================
+
+  /* =====================================================
+     LOAD ASSIGNED ISSUES
+  ===================================================== */
 
   useEffect(() => {
+
     if (!user?.uid) return;
 
     const issuesQuery = query(
@@ -107,7 +131,9 @@ function WorkerDashboard({ user, onLogout }) {
 
     const unsubscribe = onSnapshot(
       issuesQuery,
+
       (snapshot) => {
+
         const assignedIssues =
           snapshot.docs.map(
             (issueDoc) => ({
@@ -120,7 +146,9 @@ function WorkerDashboard({ user, onLogout }) {
         setIssues(assignedIssues);
         setLoading(false);
       },
+
       (snapshotError) => {
+
         console.error(
           "Assigned issues error:",
           snapshotError
@@ -138,35 +166,60 @@ function WorkerDashboard({ user, onLogout }) {
     );
 
     return () => unsubscribe();
+
   }, [user]);
 
-  // =========================================================
-  // STATS
-  // =========================================================
+
+  /* =====================================================
+     STATS
+  ===================================================== */
 
   const stats = useMemo(() => {
+
     return {
-      assigned: issues.length,
 
-      inProgress: issues.filter(
-        (issue) =>
-          issue.status ===
-          "Under Review"
-      ).length,
+      assigned:
+        issues.length,
 
-      completed: issues.filter(
-        (issue) =>
-          issue.status ===
-          "Improved"
-      ).length,
+      inProgress:
+        issues.filter(
+          (issue) =>
+            issue.status ===
+            "Under Review"
+        ).length,
+
+      completed:
+        issues.filter(
+          (issue) =>
+            issue.status ===
+            "Improved"
+        ).length,
+
     };
+
   }, [issues]);
 
-  // =========================================================
-  // OPEN ISSUE
-  // =========================================================
+
+  /* =====================================================
+     PROGRESS
+  ===================================================== */
+
+  const completionRate =
+    stats.assigned > 0
+      ? Math.round(
+          (stats.completed /
+            stats.assigned) *
+            100
+        )
+      : 0;
+
+
+  /* =====================================================
+     OPEN ISSUE
+  ===================================================== */
 
   const openIssue = (issue) => {
+
     setSelectedIssue(issue);
 
     setObservation(
@@ -194,21 +247,51 @@ function WorkerDashboard({ user, onLogout }) {
     });
   };
 
-  // =========================================================
-  // IMAGE COMPRESSION
-  // =========================================================
+
+  /* =====================================================
+     CLOSE ISSUE
+  ===================================================== */
+
+  const closeIssue = () => {
+
+    setSelectedIssue(null);
+
+    setObservation("");
+    setActionTaken("");
+    setAfterPhoto("");
+
+    setOutcome(
+      "Pending follow-up"
+    );
+
+    setError("");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+
+  /* =====================================================
+     IMAGE COMPRESSION
+  ===================================================== */
 
   const compressImage = (file) => {
+
     return new Promise(
       (resolve, reject) => {
+
         const reader =
           new FileReader();
 
         reader.onload = (event) => {
+
           const image =
             new Image();
 
           image.onload = () => {
+
             const maxWidth = 900;
             const maxHeight = 900;
 
@@ -222,6 +305,7 @@ function WorkerDashboard({ user, onLogout }) {
               width > maxWidth ||
               height > maxHeight
             ) {
+
               const ratio =
                 Math.min(
                   maxWidth / width,
@@ -269,6 +353,7 @@ function WorkerDashboard({ user, onLogout }) {
           };
 
           image.onerror = () => {
+
             reject(
               new Error(
                 "Unable to process image."
@@ -281,6 +366,7 @@ function WorkerDashboard({ user, onLogout }) {
         };
 
         reader.onerror = () => {
+
           reject(
             new Error(
               "Unable to read image."
@@ -293,13 +379,15 @@ function WorkerDashboard({ user, onLogout }) {
     );
   };
 
-  // =========================================================
-  // PHOTO
-  // =========================================================
+
+  /* =====================================================
+     PHOTO CHANGE
+  ===================================================== */
 
   const handlePhotoChange = async (
     event
   ) => {
+
     const file =
       event.target.files?.[0];
 
@@ -310,6 +398,7 @@ function WorkerDashboard({ user, onLogout }) {
         "image/"
       )
     ) {
+
       setError(
         "Please select a valid image."
       );
@@ -318,9 +407,6 @@ function WorkerDashboard({ user, onLogout }) {
     }
 
     try {
-      setActionId(
-        selectedIssue?.firestoreId
-      );
 
       setError("");
 
@@ -328,31 +414,35 @@ function WorkerDashboard({ user, onLogout }) {
         await compressImage(file);
 
       setAfterPhoto(image);
-    } catch (error) {
+
+    } catch (photoError) {
+
       console.error(
-        error
+        photoError
       );
 
       setError(
         "Unable to process the photo."
       );
-    } finally {
-      setActionId("");
+
     }
 
     event.target.value = "";
   };
 
-  // =========================================================
-  // SUBMIT FOLLOW-UP
-  // =========================================================
+
+  /* =====================================================
+     SUBMIT FOLLOW-UP
+  ===================================================== */
 
   const submitFollowUp = async () => {
+
     if (!selectedIssue) return;
 
     if (
       !observation.trim()
     ) {
+
       setError(
         "Please enter your observation."
       );
@@ -363,6 +453,7 @@ function WorkerDashboard({ user, onLogout }) {
     if (
       !actionTaken.trim()
     ) {
+
       setError(
         "Please enter the action taken."
       );
@@ -371,6 +462,7 @@ function WorkerDashboard({ user, onLogout }) {
     }
 
     if (!afterPhoto) {
+
       setError(
         "Please upload an after photo."
       );
@@ -382,12 +474,14 @@ function WorkerDashboard({ user, onLogout }) {
     setError("");
 
     try {
+
       await updateDoc(
         doc(
           db,
           "issues",
           selectedIssue.firestoreId
         ),
+
         {
           observation:
             observation.trim(),
@@ -420,46 +514,48 @@ function WorkerDashboard({ user, onLogout }) {
         }
       );
 
-      setSelectedIssue(null);
+      closeIssue();
 
-      setObservation("");
-      setActionTaken("");
-      setAfterPhoto("");
-      setOutcome(
-        "Pending follow-up"
-      );
-    } catch (error) {
+    } catch (submitError) {
+
       console.error(
         "Follow-up submission error:",
-        error
+        submitError
       );
 
       setError(
         `Unable to submit follow-up: ${
-          error?.message ||
+          submitError?.message ||
           "Firebase error"
         }`
       );
+
     } finally {
+
       setSaving(false);
     }
   };
 
-  // =========================================================
-  // LOGOUT
-  // =========================================================
+
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
 
   const handleLogout =
     async () => {
+
       try {
+
         await signOut(auth);
 
         if (onLogout) {
           onLogout();
         }
-      } catch (error) {
+
+      } catch (logoutError) {
+
         console.error(
-          error
+          logoutError
         );
 
         setError(
@@ -468,12 +564,16 @@ function WorkerDashboard({ user, onLogout }) {
       }
     };
 
-  // =========================================================
-  // HELPERS
-  // =========================================================
+
+  /* =====================================================
+     DATE FORMATTER
+  ===================================================== */
 
   const formatDate = (value) => {
-    if (!value) return "No date";
+
+    if (!value) {
+      return "No date";
+    }
 
     const date =
       new Date(value);
@@ -496,216 +596,473 @@ function WorkerDashboard({ user, onLogout }) {
     );
   };
 
-  // =========================================================
-  // WORK DETAIL VIEW
-  // =========================================================
+
+  /* =====================================================
+     STATUS CLASS
+  ===================================================== */
+
+  const getStatusClass = (
+    status
+  ) => {
+
+    if (
+      status === "Improved"
+    ) {
+      return "worker-status-complete";
+    }
+
+    if (
+      status === "Under Review"
+    ) {
+      return "worker-status-progress";
+    }
+
+    return "worker-status-open";
+  };
+
+
+  /* =====================================================
+     PRIORITY CLASS
+  ===================================================== */
+
+  const getPriorityClass = (
+    severity
+  ) => {
+
+    const value =
+      String(
+        severity || "Medium"
+      ).toLowerCase();
+
+    if (
+      value.includes("high") ||
+      value.includes("critical")
+    ) {
+      return "worker-priority-high";
+    }
+
+    if (
+      value.includes("low")
+    ) {
+      return "worker-priority-low";
+    }
+
+    return "worker-priority-medium";
+  };
+
+
+  /* =====================================================
+     DETAIL VIEW
+  ===================================================== */
 
   if (selectedIssue) {
+
     return (
-      <>
-        <style>{workerStyles}</style>
 
-        <section className="worker-app">
+      <section className="worker-app">
 
-          <header className="worker-header">
-            <div className="worker-brand">
-              <div className="worker-brand-icon">
-                <ShieldCheck size={21} />
+        {/* HEADER */}
+
+        <header className="worker-header">
+
+          <div className="worker-brand">
+
+            <div className="worker-brand-mark">
+
+              <HardHat size={20} />
+
+            </div>
+
+            <div>
+
+              <strong>
+                CivicConnect
+              </strong>
+
+              <span>
+                FIELD OPERATIONS
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div className="worker-header-center">
+
+            <div className="worker-live-indicator">
+
+              <span />
+
+              FIELD CONSOLE ONLINE
+
+            </div>
+
+          </div>
+
+
+          <div className="worker-header-right">
+
+            <div className="worker-user">
+
+              <div className="worker-avatar">
+
+                <UserRound
+                  size={16}
+                />
+
               </div>
 
               <div>
+
                 <strong>
-                  CivicConnect
+                  {workerProfile?.name ||
+                    user?.email ||
+                    "Worker"}
                 </strong>
 
                 <span>
-                  Field Operations
+                  FIELD WORKER
                 </span>
+
               </div>
+
             </div>
+
 
             <button
               className="worker-logout"
               onClick={handleLogout}
             >
+
               <LogOut size={16} />
-              Sign Out
-            </button>
-          </header>
 
-          <main className="worker-detail-page">
+              <span>
+                Sign Out
+              </span>
 
-            <button
-              className="worker-back"
-              onClick={() =>
-                setSelectedIssue(null)
-              }
-            >
-              <ArrowLeft size={17} />
-              Back to Assigned Work
             </button>
 
-            <div className="worker-detail-heading">
+          </div>
 
-              <div>
-                <span className="worker-eyebrow">
-                  FIELD WORK
+        </header>
+
+
+        <main className="worker-detail-page">
+
+          {/* BACK */}
+
+          <button
+            className="worker-back-button"
+            onClick={closeIssue}
+          >
+
+            <ArrowLeft size={16} />
+
+            Back to assigned work
+
+          </button>
+
+
+          {/* DETAIL TITLE */}
+
+          <section className="worker-detail-hero">
+
+            <div>
+
+              <div className="worker-detail-kicker">
+
+                <span>
+                  ASSIGNED FIELD JOB
                 </span>
 
-                <h1>
-                  {selectedIssue.title ||
-                    selectedIssue.category ||
-                    "Civic Issue"}
-                </h1>
+                <span className="worker-job-code">
+                  #{selectedIssue.id ||
+                    selectedIssue.firestoreId
+                      .slice(0, 8)
+                      .toUpperCase()}
+                </span>
 
-                <p>
-                  {selectedIssue.id}
-                </p>
               </div>
 
-              <span className="worker-status">
+
+              <h1>
+
+                {selectedIssue.title ||
+                  selectedIssue.category ||
+                  "Civic Issue"}
+
+              </h1>
+
+
+              <p>
+
+                Review the reported issue,
+                complete the field work and
+                submit evidence of the outcome.
+
+              </p>
+
+            </div>
+
+
+            <div className="worker-detail-status-stack">
+
+              <span
+                className={`worker-status-pill ${getStatusClass(
+                  selectedIssue.status
+                )}`}
+              >
+
+                <span />
+
                 {selectedIssue.status ||
                   "Reported"}
+
+              </span>
+
+              <span
+                className={`worker-priority ${getPriorityClass(
+                  selectedIssue.severity
+                )}`}
+              >
+
+                {selectedIssue.severity ||
+                  "Medium"}{" "}
+
+                PRIORITY
+
               </span>
 
             </div>
 
-            <div className="worker-detail-grid">
+          </section>
 
-              {/* BEFORE PHOTO */}
 
-              <div className="worker-card">
+          {/* DETAIL GRID */}
 
-                <div className="worker-card-heading">
-                  <div>
-                    <span>
-                      EVIDENCE
-                    </span>
+          <div className="worker-detail-grid">
 
-                    <h2>
-                      Before
-                    </h2>
-                  </div>
+            {/* BEFORE EVIDENCE */}
 
-                  <Camera size={20} />
+            <article className="worker-panel">
+
+              <div className="worker-panel-heading">
+
+                <div>
+
+                  <span>
+                    ORIGINAL EVIDENCE
+                  </span>
+
+                  <h2>
+                    Reported condition
+                  </h2>
+
                 </div>
 
-                {selectedIssue.beforePhoto ||
-                selectedIssue.photo ? (
-                  <img
-                    className="worker-evidence-image"
-                    src={
-                      selectedIssue.beforePhoto ||
-                      selectedIssue.photo
-                    }
-                    alt="Before civic issue"
-                  />
-                ) : (
-                  <div className="worker-no-image">
-                    <Camera size={28} />
-                    <p>
-                      No before photo
-                    </p>
-                  </div>
-                )}
+                <div className="worker-panel-icon">
+                  <ImageIcon size={18} />
+                </div>
 
               </div>
 
 
-              {/* ISSUE INFORMATION */}
+              <div className="worker-before-image">
 
-              <div className="worker-card">
+                {selectedIssue.beforePhoto ||
+                selectedIssue.photo ? (
 
-                <div className="worker-card-heading">
-                  <div>
+                  <img
+                    src={
+                      selectedIssue.beforePhoto ||
+                      selectedIssue.photo
+                    }
+                    alt="Reported civic issue"
+                  />
+
+                ) : (
+
+                  <div className="worker-no-image">
+
+                    <Camera size={30} />
+
+                    <strong>
+                      No photo attached
+                    </strong>
+
                     <span>
-                      ISSUE DETAILS
+                      This report has no
+                      original image.
                     </span>
 
-                    <h2>
-                      What needs attention?
-                    </h2>
                   </div>
 
-                  <FileText size={20} />
+                )}
+
+              </div>
+
+            </article>
+
+
+            {/* ISSUE INFORMATION */}
+
+            <article className="worker-panel">
+
+              <div className="worker-panel-heading">
+
+                <div>
+
+                  <span>
+                    ISSUE BRIEF
+                  </span>
+
+                  <h2>
+                    What needs attention?
+                  </h2>
+
                 </div>
 
-                <p className="worker-description">
-                  {selectedIssue.description ||
-                    "No description provided."}
-                </p>
+                <div className="worker-panel-icon">
+                  <ClipboardCheck
+                    size={18}
+                  />
+                </div>
 
-                <div className="worker-detail-meta">
+              </div>
+
+
+              <div className="worker-issue-description">
+
+                {selectedIssue.description ||
+                  "No description was provided for this civic issue."}
+
+              </div>
+
+
+              <div className="worker-info-list">
+
+                <div>
+
+                  <MapPin size={16} />
 
                   <div>
-                    <MapPin size={17} />
 
                     <span>
+                      LOCATION
+                    </span>
+
+                    <strong>
+
                       {selectedIssue.location
                         ? `${selectedIssue.location[0]}, ${selectedIssue.location[1]}`
                         : "Location not provided"}
-                    </span>
-                  </div>
 
-                  <div>
-                    <Clock3 size={17} />
+                    </strong>
 
-                    <span>
-                      Reported{" "}
-                      {formatDate(
-                        selectedIssue.date
-                      )}
-                    </span>
-                  </div>
-
-                  <div>
-                    <AlertTriangle size={17} />
-
-                    <span>
-                      Severity:{" "}
-                      {selectedIssue.severity ||
-                        "Medium"}
-                    </span>
                   </div>
 
                 </div>
 
+
+                <div>
+
+                  <Clock3 size={16} />
+
+                  <div>
+
+                    <span>
+                      REPORTED
+                    </span>
+
+                    <strong>
+
+                      {formatDate(
+                        selectedIssue.date
+                      )}
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div>
+
+                  <AlertTriangle
+                    size={16}
+                  />
+
+                  <div>
+
+                    <span>
+                      SEVERITY
+                    </span>
+
+                    <strong>
+
+                      {selectedIssue.severity ||
+                        "Medium"}
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </article>
+
+          </div>
+
+
+          {/* FOLLOW UP */}
+
+          <section className="worker-followup-panel">
+
+            <div className="worker-followup-top">
+
+              <div>
+
+                <div className="worker-section-kicker">
+
+                  <Radio size={13} />
+
+                  FIELD FOLLOW-UP
+
+                </div>
+
+                <h2>
+                  Close the field loop.
+                </h2>
+
+                <p>
+                  Record what you found,
+                  what you did and provide
+                  visual evidence of the result.
+                </p>
+
+              </div>
+
+
+              <div className="worker-followup-number">
+                02
               </div>
 
             </div>
 
 
-            {/* FOLLOW-UP */}
+            {/* OBSERVATION + ACTION */}
 
-            <div className="worker-followup">
+            <div className="worker-form-grid">
 
-              <div className="worker-followup-heading">
-
-                <div>
-                  <span className="worker-eyebrow">
-                    FIELD FOLLOW-UP
-                  </span>
-
-                  <h2>
-                    Record your work
-                  </h2>
-
-                  <p>
-                    Document what you observed,
-                    what action you took and
-                    provide after-work evidence.
-                  </p>
-                </div>
-
-              </div>
-
-
-              {/* OBSERVATION */}
-
-              <label className="worker-field">
+              <label className="worker-form-field">
 
                 <span>
-                  Observation
+                  <b>01</b>
+                  OBSERVATION
                 </span>
 
                 <textarea
@@ -715,19 +1072,23 @@ function WorkerDashboard({ user, onLogout }) {
                       event.target.value
                     )
                   }
-                  placeholder="What did you observe when you reached the location?"
-                  rows="5"
+                  placeholder="Describe the actual condition you observed at the location..."
+                  rows={6}
                 />
+
+                <small>
+                  Explain what you found
+                  when you reached the site.
+                </small>
 
               </label>
 
 
-              {/* ACTION */}
-
-              <label className="worker-field">
+              <label className="worker-form-field">
 
                 <span>
-                  Action Taken
+                  <b>02</b>
+                  ACTION TAKEN
                 </span>
 
                 <textarea
@@ -737,58 +1098,89 @@ function WorkerDashboard({ user, onLogout }) {
                       event.target.value
                     )
                   }
-                  placeholder="Describe the work you performed..."
-                  rows="5"
+                  placeholder="Describe the work performed or action taken..."
+                  rows={6}
                 />
+
+                <small>
+                  Record the work completed
+                  during the field visit.
+                </small>
 
               </label>
 
+            </div>
 
-              {/* AFTER PHOTO */}
 
-              <div className="worker-field">
+            {/* PHOTO */}
 
-                <span>
-                  After Photo
-                </span>
+            <div className="worker-form-field worker-photo-field">
 
-                {!afterPhoto ? (
+              <span>
+                <b>03</b>
+                AFTER PHOTO
+              </span>
 
-                  <label
-                    className="worker-upload"
-                    htmlFor="worker-after-photo"
-                  >
-                    <Camera size={28} />
 
-                    <strong>
-                      Upload After Photo
-                    </strong>
+              {!afterPhoto ? (
 
-                    <small>
-                      Take a photo of the
-                      completed work and
-                      upload it here.
-                    </small>
+                <label
+                  className="worker-photo-upload"
+                  htmlFor="worker-after-photo"
+                >
 
-                    <input
-                      id="worker-after-photo"
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={
-                        handlePhotoChange
-                      }
+                  <div className="worker-photo-upload-icon">
+
+                    <Camera size={23} />
+
+                  </div>
+
+                  <strong>
+                    Add completion evidence
+                  </strong>
+
+                  <small>
+                    Take or upload a clear
+                    photo showing the result
+                    of the field work.
+                  </small>
+
+                  <div className="worker-photo-upload-button">
+
+                    CHOOSE PHOTO
+
+                    <ArrowUpRight
+                      size={15}
                     />
-                  </label>
 
-                ) : (
+                  </div>
 
-                  <div className="worker-photo-preview">
+                  <input
+                    id="worker-after-photo"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={
+                      handlePhotoChange
+                    }
+                  />
 
-                    <img
-                      src={afterPhoto}
-                      alt="After work evidence"
-                    />
+                </label>
+
+              ) : (
+
+                <div className="worker-photo-preview">
+
+                  <img
+                    src={afterPhoto}
+                    alt="After field work"
+                  />
+
+                  <div className="worker-photo-preview-overlay">
+
+                    <span>
+                      AFTER EVIDENCE
+                    </span>
 
                     <button
                       type="button"
@@ -796,22 +1188,31 @@ function WorkerDashboard({ user, onLogout }) {
                         setAfterPhoto("")
                       }
                     >
-                      <X size={17} />
+
+                      <X size={15} />
+
+                      Replace
+
                     </button>
 
                   </div>
 
-                )}
+                </div>
 
-              </div>
+              )}
+
+            </div>
 
 
-              {/* OUTCOME */}
+            {/* OUTCOME */}
 
-              <label className="worker-field">
+            <div className="worker-outcome-row">
+
+              <label className="worker-form-field">
 
                 <span>
-                  Outcome
+                  <b>04</b>
+                  OUTCOME
                 </span>
 
                 <select
@@ -822,6 +1223,7 @@ function WorkerDashboard({ user, onLogout }) {
                     )
                   }
                 >
+
                   <option value="Pending follow-up">
                     Pending follow-up
                   </option>
@@ -833,1186 +1235,869 @@ function WorkerDashboard({ user, onLogout }) {
                   <option value="Improved">
                     Improved
                   </option>
+
                 </select>
 
               </label>
 
 
-              {error && (
-                <div className="worker-error">
-                  <AlertTriangle
-                    size={17}
-                  />
-
-                  {error}
-                </div>
-              )}
-
-
-              <button
-                className="worker-submit"
-                disabled={saving}
-                onClick={
-                  submitFollowUp
-                }
-              >
-                <Save size={18} />
-
-                {saving
-                  ? "Submitting Follow-up..."
-                  : "Submit Follow-up"}
-
-                {!saving && (
-                  <CheckCircle2
-                    size={18}
-                  />
-                )}
-              </button>
-
-            </div>
-
-          </main>
-        </section>
-      </>
-    );
-  }
-
-  // =========================================================
-  // WORKER DASHBOARD
-  // =========================================================
-
-  return (
-    <>
-      <style>{workerStyles}</style>
-
-      <section className="worker-app">
-
-        {/* HEADER */}
-
-        <header className="worker-header">
-
-          <div className="worker-brand">
-
-            <div className="worker-brand-icon">
-              <ShieldCheck size={21} />
-            </div>
-
-            <div>
-              <strong>
-                CivicConnect
-              </strong>
-
-              <span>
-                Field Operations
-              </span>
-            </div>
-
-          </div>
-
-
-          <div className="worker-header-right">
-
-            <div className="worker-user">
-
-              <div className="worker-avatar">
-                <UserRound size={17} />
-              </div>
-
-              <div>
-                <strong>
-                  {workerProfile?.name ||
-                    user?.email ||
-                    "Worker"}
-                </strong>
-
-                <span>
-                  Field Worker
-                </span>
-              </div>
-
-            </div>
-
-
-            <button
-              className="worker-logout"
-              onClick={handleLogout}
-            >
-              <LogOut size={16} />
-              Sign Out
-            </button>
-
-          </div>
-
-        </header>
-
-
-        <main className="worker-dashboard">
-
-          {/* HERO */}
-
-          <section className="worker-hero">
-
-            <div>
-
-              <span className="worker-eyebrow">
-                FIELD OPERATIONS
-              </span>
-
-              <h1>
-                {workerProfile?.name
-                  ? `Hello, ${workerProfile.name.split(" ")[0]}`
-                  : "Worker Dashboard"}
-              </h1>
-
-              <p>
-                Manage your assigned civic
-                issues, document field work and
-                submit improvement evidence.
-              </p>
-
-            </div>
-
-            <div className="worker-hero-mark">
-              <ShieldCheck size={65} />
-            </div>
-
-          </section>
-
-
-          {/* ERROR */}
-
-          {error && (
-            <div className="worker-error">
-              <AlertTriangle
-                size={17}
-              />
-
-              {error}
-
-              <button
-                onClick={() =>
-                  setError("")
-                }
-              >
-                <X size={15} />
-              </button>
-            </div>
-          )}
-
-
-          {/* STATS */}
-
-          <section className="worker-stats">
-
-            <div className="worker-stat">
-
-              <div>
-                <span>
-                  Assigned
-                </span>
-
-                <strong>
-                  {stats.assigned}
-                </strong>
-              </div>
-
-              <FileText size={21} />
-
-            </div>
-
-
-            <div className="worker-stat">
-
-              <div>
-                <span>
-                  In Progress
-                </span>
-
-                <strong>
-                  {stats.inProgress}
-                </strong>
-              </div>
-
-              <Clock3 size={21} />
-
-            </div>
-
-
-            <div className="worker-stat">
-
-              <div>
-                <span>
-                  Completed
-                </span>
-
-                <strong>
-                  {stats.completed}
-                </strong>
-              </div>
-
-              <CheckCircle2 size={21} />
-
-            </div>
-
-          </section>
-
-
-          {/* ASSIGNED WORK */}
-
-          <section className="worker-work-section">
-
-            <div className="worker-section-heading">
-
-              <div>
-                <span className="worker-eyebrow">
-                  YOUR WORK
-                </span>
-
-                <h2>
-                  Assigned Issues
-                </h2>
-              </div>
-
-              <span className="worker-count">
-                {issues.length}{" "}
-                {issues.length === 1
-                  ? "issue"
-                  : "issues"}
-              </span>
-
-            </div>
-
-
-            {loading ? (
-
-              <div className="worker-empty">
-                <Clock3 size={28} />
-                <h3>
-                  Loading your work...
-                </h3>
-              </div>
-
-            ) : issues.length === 0 ? (
-
-              <div className="worker-empty">
+              <div className="worker-outcome-info">
 
                 <CheckCircle2
-                  size={34}
+                  size={19}
                 />
 
-                <h3>
-                  No work assigned yet
-                </h3>
+                <div>
 
-                <p>
-                  Your assigned civic issues
-                  will appear here when an
-                  administrator assigns them
-                  to you.
-                </p>
+                  <strong>
+                    Ready to submit?
+                  </strong>
+
+                  <span>
+                    Make sure your observation,
+                    action and after photo are
+                    complete.
+                  </span>
+
+                </div>
 
               </div>
 
-            ) : (
-
-              <div className="worker-issue-list">
-
-                {issues.map(
-                  (issue) => (
-
-                    <article
-                      className="worker-issue-card"
-                      key={
-                        issue.firestoreId
-                      }
-                    >
-
-                      <div className="worker-issue-content">
-
-                        <div className="worker-issue-top">
-
-                          <div>
-
-                            <span>
-                              {issue.id ||
-                                issue.firestoreId}
-                            </span>
-
-                            <h3>
-                              {issue.title ||
-                                issue.category ||
-                                "Civic Issue"}
-                            </h3>
-
-                          </div>
-
-                          <strong>
-                            {issue.status ||
-                              "Reported"}
-                          </strong>
-
-                        </div>
+            </div>
 
 
-                        <p>
-                          {issue.description ||
-                            "No description provided."}
-                        </p>
+            {/* ERROR */}
 
+            {error && (
 
-                        <div className="worker-issue-meta">
+              <div className="worker-error">
 
-                          <span>
-                            <MapPin
-                              size={14}
-                            />
+                <AlertTriangle
+                  size={17}
+                />
 
-                            {issue.location
-                              ? `${issue.location[0]}, ${issue.location[1]}`
-                              : "Location unavailable"}
-                          </span>
+                <span>
+                  {error}
+                </span>
 
-                          <span>
-                            Reported{" "}
-                            {formatDate(
-                              issue.date
-                            )}
-                          </span>
-
-                          <span>
-                            {issue.severity ||
-                              "Medium"}{" "}
-                            severity
-                          </span>
-
-                        </div>
-
-                      </div>
-
-
-                      <button
-                        className="worker-open-button"
-                        onClick={() =>
-                          openIssue(
-                            issue
-                          )
-                        }
-                      >
-                        Open Work
-                        <ArrowLeft
-                          size={17}
-                          style={{
-                            transform:
-                              "rotate(180deg)",
-                          }}
-                        />
-                      </button>
-
-                    </article>
-
-                  )
-                )}
+                <button
+                  onClick={() =>
+                    setError("")
+                  }
+                >
+                  <X size={15} />
+                </button>
 
               </div>
 
             )}
+
+
+            {/* SUBMIT */}
+
+            <button
+              className="worker-submit-button"
+              disabled={saving}
+              onClick={
+                submitFollowUp
+              }
+            >
+
+              <span className="worker-submit-icon">
+
+                {saving ? (
+                  <Activity
+                    size={18}
+                    className="worker-spin"
+                  />
+                ) : (
+                  <Save size={18} />
+                )}
+
+              </span>
+
+              <span>
+
+                {saving
+                  ? "SUBMITTING FIELD REPORT..."
+                  : "SUBMIT FIELD REPORT"}
+
+              </span>
+
+              {!saving && (
+                <ArrowUpRight
+                  size={18}
+                />
+              )}
+
+            </button>
 
           </section>
 
         </main>
 
       </section>
-    </>
+    );
+  }
+
+
+  /* =====================================================
+     MAIN DASHBOARD
+  ===================================================== */
+
+  const firstName =
+    workerProfile?.name
+      ? workerProfile.name
+          .trim()
+          .split(" ")[0]
+      : "Worker";
+
+
+  return (
+
+    <section className="worker-app">
+
+      {/* =================================================
+          HEADER
+      ================================================= */}
+
+      <header className="worker-header">
+
+        <div className="worker-brand">
+
+          <div className="worker-brand-mark">
+
+            <HardHat size={20} />
+
+          </div>
+
+          <div>
+
+            <strong>
+              CivicConnect
+            </strong>
+
+            <span>
+              FIELD OPERATIONS
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div className="worker-header-center">
+
+          <div className="worker-live-indicator">
+
+            <span />
+
+            FIELD CONSOLE ONLINE
+
+          </div>
+
+        </div>
+
+
+        <div className="worker-header-right">
+
+          <div className="worker-user">
+
+            <div className="worker-avatar">
+
+              <UserRound size={16} />
+
+            </div>
+
+            <div>
+
+              <strong>
+
+                {workerProfile?.name ||
+                  user?.email ||
+                  "Worker"}
+
+              </strong>
+
+              <span>
+                FIELD WORKER
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <button
+            className="worker-logout"
+            onClick={handleLogout}
+          >
+
+            <LogOut size={16} />
+
+            <span>
+              Sign Out
+            </span>
+
+          </button>
+
+        </div>
+
+      </header>
+
+
+      {/* =================================================
+          MAIN
+      ================================================= */}
+
+      <main className="worker-dashboard">
+
+        {/* =================================================
+            HERO
+        ================================================= */}
+
+        <section className="worker-hero">
+
+          <div className="worker-hero-main">
+
+            <div className="worker-hero-kicker">
+
+              <span />
+
+              FIELD OPERATIONS / TODAY
+
+            </div>
+
+
+            <h1>
+
+              Good morning,
+              <br />
+
+              <span>
+                {firstName}.
+              </span>
+
+            </h1>
+
+
+            <p>
+
+              Your field console for assigned
+              civic work, evidence and
+              neighbourhood improvements.
+
+            </p>
+
+
+            <div className="worker-hero-meta">
+
+              <div>
+
+                <Activity size={15} />
+
+                <span>
+                  Live assignment feed
+                </span>
+
+              </div>
+
+              <div>
+
+                <ShieldCheck size={15} />
+
+                <span>
+                  Worker session secured
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="worker-hero-side">
+
+            <div className="worker-hero-orbit">
+
+              <div className="worker-hero-orbit-ring" />
+
+              <div className="worker-hero-symbol">
+
+                <HardHat size={40} />
+
+              </div>
+
+            </div>
+
+
+            <div className="worker-hero-side-label">
+
+              <span>
+                FIELD STATUS
+              </span>
+
+              <strong>
+                ACTIVE
+              </strong>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        {/* =================================================
+            ERROR
+        ================================================= */}
+
+        {error && (
+
+          <div className="worker-error">
+
+            <AlertTriangle
+              size={17}
+            />
+
+            <span>
+              {error}
+            </span>
+
+            <button
+              onClick={() =>
+                setError("")
+              }
+            >
+              <X size={15} />
+            </button>
+
+          </div>
+
+        )}
+
+
+        {/* =================================================
+            STATS
+        ================================================= */}
+
+        <section className="worker-stat-grid">
+
+          <article className="worker-stat-card">
+
+            <div className="worker-stat-number">
+
+              {stats.assigned}
+
+            </div>
+
+            <div className="worker-stat-copy">
+
+              <span>
+                TOTAL ASSIGNED
+              </span>
+
+              <strong>
+                Field jobs
+              </strong>
+
+            </div>
+
+            <div className="worker-stat-icon">
+              <ClipboardCheck
+                size={19}
+              />
+            </div>
+
+          </article>
+
+
+          <article className="worker-stat-card worker-stat-card-progress">
+
+            <div className="worker-stat-number">
+
+              {stats.inProgress}
+
+            </div>
+
+            <div className="worker-stat-copy">
+
+              <span>
+                IN PROGRESS
+              </span>
+
+              <strong>
+                Under review
+              </strong>
+
+            </div>
+
+            <div className="worker-stat-icon">
+              <Clock3
+                size={19}
+              />
+            </div>
+
+          </article>
+
+
+          <article className="worker-stat-card worker-stat-card-complete">
+
+            <div className="worker-stat-number">
+
+              {stats.completed}
+
+            </div>
+
+            <div className="worker-stat-copy">
+
+              <span>
+                COMPLETED
+              </span>
+
+              <strong>
+                Improved
+              </strong>
+
+            </div>
+
+            <div className="worker-stat-icon">
+              <CheckCircle2
+                size={19}
+              />
+            </div>
+
+          </article>
+
+
+          <article className="worker-stat-card worker-stat-card-progress-main">
+
+            <div className="worker-progress-stat">
+
+              <div className="worker-progress-circle">
+
+                <svg
+                  viewBox="0 0 42 42"
+                >
+
+                  <circle
+                    cx="21"
+                    cy="21"
+                    r="17"
+                    className="worker-progress-track"
+                  />
+
+                  <circle
+                    cx="21"
+                    cy="21"
+                    r="17"
+                    className="worker-progress-value"
+                    style={{
+                      strokeDasharray: `${completionRate} 100`,
+                    }}
+                  />
+
+                </svg>
+
+                <strong>
+                  {completionRate}%
+                </strong>
+
+              </div>
+
+
+              <div>
+
+                <span>
+                  COMPLETION RATE
+                </span>
+
+                <strong>
+                  Field progress
+                </strong>
+
+              </div>
+
+            </div>
+
+          </article>
+
+        </section>
+
+
+        {/* =================================================
+            ASSIGNED WORK
+        ================================================= */}
+
+        <section className="worker-work-area">
+
+          <div className="worker-work-heading">
+
+            <div>
+
+              <div className="worker-section-kicker">
+
+                <Radio size={13} />
+
+                LIVE WORK QUEUE
+
+              </div>
+
+              <h2>
+                Assigned field work
+              </h2>
+
+              <p>
+                Open an assignment to review
+                the issue and submit field
+                evidence.
+              </p>
+
+            </div>
+
+
+            <div className="worker-work-count">
+
+              <strong>
+                {issues.length}
+              </strong>
+
+              <span>
+                {issues.length === 1
+                  ? "ACTIVE JOB"
+                  : "ACTIVE JOBS"}
+              </span>
+
+            </div>
+
+          </div>
+
+
+          {/* LOADING */}
+
+          {loading ? (
+
+            <div className="worker-loading">
+
+              <div className="worker-loading-spinner" />
+
+              <strong>
+                Loading field assignments
+              </strong>
+
+              <span>
+                Connecting to the CivicConnect
+                work queue...
+              </span>
+
+            </div>
+
+          ) : issues.length === 0 ? (
+
+            /* EMPTY */
+
+            <div className="worker-empty-state">
+
+              <div className="worker-empty-icon">
+
+                <CheckCircle2
+                  size={25}
+                />
+
+              </div>
+
+              <div>
+
+                <span>
+                  QUEUE CLEAR
+                </span>
+
+                <h3>
+                  No field work assigned
+                </h3>
+
+                <p>
+                  New civic assignments will
+                  appear here when an
+                  administrator assigns them
+                  to you.
+                </p>
+
+              </div>
+
+            </div>
+
+          ) : (
+
+            /* ISSUE LIST */
+
+            <div className="worker-issue-list">
+
+              {issues.map(
+                (issue, index) => (
+
+                  <article
+                    className="worker-issue-card"
+                    key={
+                      issue.firestoreId
+                    }
+                  >
+
+                    {/* INDEX */}
+
+                    <div className="worker-issue-index">
+
+                      {String(
+                        index + 1
+                      ).padStart(2, "0")}
+
+                    </div>
+
+
+                    {/* THUMBNAIL */}
+
+                    <div className="worker-issue-thumb">
+
+                      {issue.beforePhoto ||
+                      issue.photo ? (
+
+                        <img
+                          src={
+                            issue.beforePhoto ||
+                            issue.photo
+                          }
+                          alt=""
+                        />
+
+                      ) : (
+
+                        <div>
+                          <Camera
+                            size={22}
+                          />
+                        </div>
+
+                      )}
+
+                    </div>
+
+
+                    {/* CONTENT */}
+
+                    <div className="worker-issue-main">
+
+                      <div className="worker-issue-topline">
+
+                        <span className="worker-job-id">
+
+                          #{issue.id ||
+                            issue.firestoreId
+                              .slice(0, 8)
+                              .toUpperCase()}
+
+                        </span>
+
+
+                        <span
+                          className={`worker-status-pill ${getStatusClass(
+                            issue.status
+                          )}`}
+                        >
+
+                          <span />
+
+                          {issue.status ||
+                            "Reported"}
+
+                        </span>
+
+                      </div>
+
+
+                      <h3>
+
+                        {issue.title ||
+                          issue.category ||
+                          "Civic Issue"}
+
+                      </h3>
+
+
+                      <p>
+
+                        {issue.description ||
+                          "No description provided."}
+
+                      </p>
+
+
+                      <div className="worker-issue-details">
+
+                        <span>
+
+                          <MapPin
+                            size={13}
+                          />
+
+                          {issue.location
+                            ? `${issue.location[0]}, ${issue.location[1]}`
+                            : "Location unavailable"}
+
+                        </span>
+
+
+                        <span>
+
+                          <Clock3
+                            size={13}
+                          />
+
+                          {formatDate(
+                            issue.date
+                          )}
+
+                        </span>
+
+
+                        <span
+                          className={getPriorityClass(
+                            issue.severity
+                          )}
+                        >
+
+                          {issue.severity ||
+                            "Medium"}
+
+                          {" "}PRIORITY
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* ACTION */}
+
+                    <button
+                      className="worker-open-job"
+                      onClick={() =>
+                        openIssue(
+                          issue
+                        )
+                      }
+                    >
+
+                      <span>
+                        OPEN JOB
+                      </span>
+
+                      <ChevronRight
+                        size={17}
+                      />
+
+                    </button>
+
+                  </article>
+
+                )
+              )}
+
+            </div>
+
+          )}
+
+        </section>
+
+
+        {/* =================================================
+            BOTTOM OPERATION STRIP
+        ================================================= */}
+
+        <section className="worker-operation-strip">
+
+          <div className="worker-operation-item">
+
+            <div className="worker-operation-icon">
+              <ShieldCheck
+                size={18}
+              />
+            </div>
+
+            <div>
+
+              <span>
+                SECURE SESSION
+              </span>
+
+              <strong>
+                Worker identity verified
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div className="worker-operation-line" />
+
+
+          <div className="worker-operation-item">
+
+            <div className="worker-operation-icon">
+              <Radio
+                size={18}
+              />
+            </div>
+
+            <div>
+
+              <span>
+                REAL-TIME SYNC
+              </span>
+
+              <strong>
+                Assignment feed connected
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div className="worker-operation-line" />
+
+
+          <div className="worker-operation-item">
+
+            <div className="worker-operation-icon">
+              <Check
+                size={18}
+              />
+            </div>
+
+            <div>
+
+              <span>
+                FIELD PROTOCOL
+              </span>
+
+              <strong>
+                Document every completed job
+              </strong>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+    </section>
   );
 }
 
-
-// =========================================================
-// STYLES
-// =========================================================
-
-const workerStyles = `
-
-  * {
-    box-sizing: border-box;
-  }
-
-  .worker-app {
-    min-height: 100vh;
-    background:
-      radial-gradient(
-        circle at top left,
-        rgba(54, 103, 74, .10),
-        transparent 30%
-      ),
-      #f5f7f3;
-    color: #18241c;
-    font-family:
-      Inter,
-      ui-sans-serif,
-      system-ui,
-      -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
-      sans-serif;
-  }
-
-  .worker-header {
-    height: 76px;
-    padding: 0 5vw;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    border-bottom: 1px solid #dfe6df;
-    background: rgba(255,255,255,.90);
-    backdrop-filter: blur(18px);
-    position: sticky;
-    top: 0;
-    z-index: 20;
-  }
-
-  .worker-brand,
-  .worker-header-right,
-  .worker-user {
-    display: flex;
-    align-items: center;
-  }
-
-  .worker-brand {
-    gap: 11px;
-  }
-
-  .worker-brand-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: #183b2a;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .worker-brand strong,
-  .worker-brand span,
-  .worker-user strong,
-  .worker-user span {
-    display: block;
-  }
-
-  .worker-brand strong {
-    font-size: 15px;
-    letter-spacing: -.02em;
-  }
-
-  .worker-brand span {
-    margin-top: 2px;
-    color: #718078;
-    font-size: 10px;
-    font-weight: 700;
-  }
-
-  .worker-header-right {
-    gap: 18px;
-  }
-
-  .worker-user {
-    gap: 9px;
-  }
-
-  .worker-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #e8f0ea;
-    color: #315b42;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .worker-user strong {
-    font-size: 12px;
-  }
-
-  .worker-user span {
-    margin-top: 2px;
-    color: #7a857d;
-    font-size: 10px;
-  }
-
-  .worker-logout {
-    height: 39px;
-    padding: 0 13px;
-    border: 1px solid #d8e0d9;
-    border-radius: 10px;
-    background: white;
-    color: #33443a;
-    font-size: 11px;
-    font-weight: 800;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  .worker-logout:hover {
-    border-color: #9db2a2;
-    background: #f7faf7;
-  }
-
-  .worker-dashboard,
-  .worker-detail-page {
-    width: min(1180px, calc(100% - 32px));
-    margin: 0 auto;
-    padding: 48px 0 80px;
-  }
-
-  .worker-hero {
-    min-height: 250px;
-    padding: 38px 42px;
-    border-radius: 26px;
-    background:
-      linear-gradient(
-        135deg,
-        #173b29,
-        #28563c
-      );
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    overflow: hidden;
-    position: relative;
-    box-shadow:
-      0 22px 55px rgba(25, 57, 39, .16);
-  }
-
-  .worker-eyebrow {
-    color: #5d8068;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: .16em;
-  }
-
-  .worker-hero .worker-eyebrow {
-    color: rgba(255,255,255,.62);
-  }
-
-  .worker-hero h1 {
-    margin: 11px 0 10px;
-    font-size: clamp(34px, 5vw, 54px);
-    line-height: 1;
-    letter-spacing: -.05em;
-  }
-
-  .worker-hero p {
-    max-width: 570px;
-    margin: 0;
-    color: rgba(255,255,255,.72);
-    font-size: 14px;
-    line-height: 1.7;
-  }
-
-  .worker-hero-mark {
-    width: 145px;
-    height: 145px;
-    border-radius: 50%;
-    background: rgba(255,255,255,.08);
-    border: 1px solid rgba(255,255,255,.12);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255,255,255,.72);
-    flex-shrink: 0;
-  }
-
-  .worker-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin: 18px 0 35px;
-  }
-
-  .worker-stat {
-    padding: 22px;
-    border: 1px solid #dfe6df;
-    border-radius: 18px;
-    background: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow:
-      0 9px 25px rgba(28,48,35,.045);
-  }
-
-  .worker-stat span {
-    display: block;
-    color: #7b867e;
-    font-size: 11px;
-    font-weight: 700;
-    margin-bottom: 5px;
-  }
-
-  .worker-stat strong {
-    display: block;
-    font-size: 29px;
-    letter-spacing: -.04em;
-  }
-
-  .worker-stat > svg {
-    color: #3d6a4c;
-  }
-
-  .worker-error {
-    margin: 18px 0;
-    padding: 13px 15px;
-    border: 1px solid #f0cbc6;
-    border-radius: 13px;
-    background: #fff2f0;
-    color: #a34237;
-    font-size: 12px;
-    line-height: 1.5;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-  }
-
-  .worker-error button {
-    margin-left: auto;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    cursor: pointer;
-  }
-
-  .worker-work-section {
-    padding: 28px;
-    border: 1px solid #dfe6df;
-    border-radius: 23px;
-    background: rgba(255,255,255,.84);
-    box-shadow:
-      0 15px 45px rgba(27,45,34,.05);
-  }
-
-  .worker-section-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 20px;
-  }
-
-  .worker-section-heading h2 {
-    margin: 7px 0 0;
-    font-size: 27px;
-    letter-spacing: -.035em;
-  }
-
-  .worker-count {
-    padding: 7px 11px;
-    border-radius: 999px;
-    background: #edf3ee;
-    color: #315b42;
-    font-size: 10px;
-    font-weight: 800;
-  }
-
-  .worker-issue-list {
-    display: grid;
-    gap: 14px;
-  }
-
-  .worker-issue-card {
-    padding: 22px;
-    border: 1px solid #e0e6e1;
-    border-radius: 18px;
-    background: white;
-    transition: .2s ease;
-  }
-
-  .worker-issue-card:hover {
-    transform: translateY(-2px);
-    border-color: #c6d4c9;
-    box-shadow:
-      0 12px 30px rgba(27,45,34,.06);
-  }
-
-  .worker-issue-content {
-    margin-bottom: 18px;
-  }
-
-  .worker-issue-top {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-  }
-
-  .worker-issue-top > div > span {
-    color: #839087;
-    font-size: 10px;
-    font-weight: 900;
-    letter-spacing: .1em;
-  }
-
-  .worker-issue-top h3 {
-    margin: 6px 0 0;
-    font-size: 20px;
-    letter-spacing: -.025em;
-  }
-
-  .worker-issue-top > strong {
-    height: fit-content;
-    padding: 7px 10px;
-    border-radius: 999px;
-    background: #eaf1f8;
-    color: #42657f;
-    font-size: 9px;
-    font-weight: 900;
-    white-space: nowrap;
-  }
-
-  .worker-issue-content > p {
-    margin: 12px 0;
-    color: #647067;
-    font-size: 13px;
-    line-height: 1.65;
-  }
-
-  .worker-issue-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .worker-issue-meta span {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 6px 9px;
-    border: 1px solid #e4e9e4;
-    border-radius: 8px;
-    color: #748078;
-    background: #fafcfa;
-    font-size: 10px;
-    font-weight: 700;
-  }
-
-  .worker-issue-meta svg {
-    color: #4f7359;
-  }
-
-  .worker-open-button {
-    width: 100%;
-    height: 46px;
-    border: 0;
-    border-radius: 11px;
-    background: #183b2a;
-    color: white;
-    font-size: 12px;
-    font-weight: 900;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .worker-open-button:hover {
-    background: #28563c;
-  }
-
-  .worker-empty {
-    padding: 65px 20px;
-    text-align: center;
-    color: #748078;
-  }
-
-  .worker-empty svg {
-    color: #5b7c65;
-  }
-
-  .worker-empty h3 {
-    margin: 10px 0 5px;
-    color: #29372e;
-  }
-
-  .worker-empty p {
-    max-width: 450px;
-    margin: 0 auto;
-    font-size: 13px;
-    line-height: 1.6;
-  }
-
-  .worker-back {
-    border: 0;
-    background: transparent;
-    color: #315b42;
-    font-size: 12px;
-    font-weight: 800;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 0;
-    margin-bottom: 25px;
-  }
-
-  .worker-detail-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 20px;
-    margin-bottom: 24px;
-  }
-
-  .worker-detail-heading h1 {
-    margin: 8px 0 4px;
-    font-size: clamp(30px, 4vw, 45px);
-    letter-spacing: -.045em;
-  }
-
-  .worker-detail-heading p {
-    margin: 0;
-    color: #7a867e;
-    font-size: 11px;
-    font-weight: 800;
-  }
-
-  .worker-status {
-    padding: 9px 13px;
-    border-radius: 999px;
-    background: #eaf1f8;
-    color: #42657f;
-    font-size: 10px;
-    font-weight: 900;
-  }
-
-  .worker-detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-  }
-
-  .worker-card {
-    padding: 22px;
-    border: 1px solid #dfe6df;
-    border-radius: 20px;
-    background: white;
-    box-shadow:
-      0 10px 30px rgba(27,45,34,.04);
-  }
-
-  .worker-card-heading {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 17px;
-  }
-
-  .worker-card-heading span {
-    display: block;
-    color: #7a897f;
-    font-size: 9px;
-    font-weight: 900;
-    letter-spacing: .14em;
-  }
-
-  .worker-card-heading h2 {
-    margin: 5px 0 0;
-    font-size: 19px;
-  }
-
-  .worker-card-heading > svg {
-    color: #4f7359;
-  }
-
-  .worker-evidence-image {
-    width: 100%;
-    height: 310px;
-    object-fit: contain;
-    border-radius: 13px;
-    background: #eef1ed;
-    display: block;
-  }
-
-  .worker-no-image {
-    height: 310px;
-    border-radius: 13px;
-    background: #f2f5f2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #89948d;
-  }
-
-  .worker-no-image p {
-    margin: 8px 0 0;
-    font-size: 12px;
-  }
-
-  .worker-description {
-    color: #59665e;
-    font-size: 13px;
-    line-height: 1.7;
-  }
-
-  .worker-detail-meta {
-    display: grid;
-    gap: 9px;
-    margin-top: 22px;
-  }
-
-  .worker-detail-meta div {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    color: #6e7b72;
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
-  .worker-detail-meta svg {
-    color: #4f7359;
-    flex-shrink: 0;
-  }
-
-  .worker-followup {
-    margin-top: 17px;
-    padding: 28px;
-    border: 1px solid #dfe6df;
-    border-radius: 22px;
-    background: white;
-  }
-
-  .worker-followup-heading {
-    margin-bottom: 24px;
-  }
-
-  .worker-followup-heading h2 {
-    margin: 7px 0 5px;
-    font-size: 26px;
-    letter-spacing: -.03em;
-  }
-
-  .worker-followup-heading p {
-    margin: 0;
-    color: #6f7a73;
-    font-size: 13px;
-  }
-
-  .worker-field {
-    display: block;
-    margin-bottom: 20px;
-  }
-
-  .worker-field > span {
-    display: block;
-    margin-bottom: 8px;
-    color: #35443a;
-    font-size: 11px;
-    font-weight: 900;
-  }
-
-  .worker-field textarea,
-  .worker-field select {
-    width: 100%;
-    border: 1px solid #dce4dd;
-    border-radius: 12px;
-    background: #fbfcfa;
-    color: #243229;
-    outline: none;
-    font: inherit;
-    font-size: 13px;
-  }
-
-  .worker-field textarea {
-    min-height: 120px;
-    padding: 13px;
-    resize: vertical;
-    line-height: 1.6;
-  }
-
-  .worker-field select {
-    height: 48px;
-    padding: 0 12px;
-    cursor: pointer;
-  }
-
-  .worker-field textarea:focus,
-  .worker-field select:focus {
-    border-color: #70907b;
-    box-shadow:
-      0 0 0 3px rgba(63,105,76,.08);
-  }
-
-  .worker-upload {
-    min-height: 170px;
-    border: 1px dashed #b9c9bd;
-    border-radius: 15px;
-    background: #f6f9f6;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    cursor: pointer;
-    padding: 25px;
-    color: #4f7359;
-  }
-
-  .worker-upload strong {
-    margin-top: 10px;
-    color: #315b42;
-    font-size: 13px;
-  }
-
-  .worker-upload small {
-    max-width: 390px;
-    margin-top: 6px;
-    color: #7c877f;
-    font-size: 11px;
-    line-height: 1.5;
-  }
-
-  .worker-upload input {
-    display: none;
-  }
-
-  .worker-photo-preview {
-    position: relative;
-    overflow: hidden;
-    border-radius: 15px;
-    background: #eef1ed;
-  }
-
-  .worker-photo-preview img {
-    width: 100%;
-    max-height: 480px;
-    display: block;
-    object-fit: contain;
-  }
-
-  .worker-photo-preview button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 35px;
-    height: 35px;
-    border: 0;
-    border-radius: 10px;
-    background: rgba(20,30,24,.78);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-
-  .worker-submit {
-    width: 100%;
-    height: 54px;
-    margin-top: 8px;
-    border: 0;
-    border-radius: 13px;
-    background: #183b2a;
-    color: white;
-    font-size: 13px;
-    font-weight: 900;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .worker-submit:hover {
-    background: #28563c;
-  }
-
-  .worker-submit:disabled {
-    opacity: .55;
-    cursor: not-allowed;
-  }
-
-  @media (max-width: 800px) {
-
-    .worker-header {
-      padding: 0 16px;
-    }
-
-    .worker-user {
-      display: none;
-    }
-
-    .worker-dashboard,
-    .worker-detail-page {
-      width: min(
-        100% - 24px,
-        1180px
-      );
-      padding-top: 24px;
-    }
-
-    .worker-hero {
-      padding: 28px;
-    }
-
-    .worker-hero-mark {
-      display: none;
-    }
-
-    .worker-stats {
-      grid-template-columns: 1fr;
-    }
-
-    .worker-detail-grid {
-      grid-template-columns: 1fr;
-    }
-
-  }
-
-  @media (max-width: 520px) {
-
-    .worker-brand span {
-      display: none;
-    }
-
-    .worker-logout {
-      padding: 0 10px;
-    }
-
-    .worker-logout svg {
-      margin: 0;
-    }
-
-    .worker-logout {
-      font-size: 0;
-    }
-
-    .worker-logout svg {
-      width: 18px;
-      height: 18px;
-    }
-
-    .worker-work-section,
-    .worker-followup {
-      padding: 18px;
-    }
-
-    .worker-issue-top,
-    .worker-detail-heading {
-      flex-direction: column;
-    }
-
-    .worker-issue-top > strong,
-    .worker-status {
-      align-self: flex-start;
-    }
-
-  }
-
-`;
 
 export default WorkerDashboard;

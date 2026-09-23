@@ -51,6 +51,23 @@ useEffect(() => {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedIssue, setSelectedIssue] = useState(null);
 
+  useEffect(() => {
+    if (!selectedIssue) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setSelectedIssue(null);
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedIssue]);
+
   const categories = useMemo(() => {
     return [
       "All",
@@ -789,6 +806,8 @@ function IssueReportCard({
           <img
             src={beforePhoto}
             alt={title}
+            loading="lazy"
+            decoding="async"
             style={{
               width: "100%",
               height: "100%",
@@ -1393,6 +1412,8 @@ function EvidenceImage({
         <img
           src={image}
           alt={`${title} evidence`}
+          loading="lazy"
+          decoding="async"
         />
       ) : (
         <div className="evidence-empty">

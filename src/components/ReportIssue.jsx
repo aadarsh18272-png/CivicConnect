@@ -538,7 +538,7 @@ export default function ReportIssue({
       >
         <div className="report-container">
 
-          <div className="report-success">
+          <div className="report-success cc-report-success" role="status" aria-live="polite">
 
             <div className="success-icon">
               <CheckCircle2
@@ -727,12 +727,13 @@ export default function ReportIssue({
                   </p>
 
                   {!afterPhotoPreview ? (
-                    <label className="photo-upload">
+                    <label className="photo-upload cc-photo-upload">
 
                       <input
                         type="file"
                         accept="image/*"
                         capture="environment"
+                        aria-label="Upload after photo"
                         onChange={
                           handleAfterPhotoChange
                         }
@@ -758,6 +759,7 @@ export default function ReportIssue({
                           afterPhotoPreview
                         }
                         alt="After evidence preview"
+                        loading="lazy"
                       />
 
                       <button
@@ -950,7 +952,7 @@ export default function ReportIssue({
                 01 CATEGORY
             ================================================= */}
 
-            <div className="form-card">
+            <div className="form-card cc-form-card">
 
               <div className="form-card-number">
                 01
@@ -1019,7 +1021,7 @@ export default function ReportIssue({
                 02 SEVERITY
             ================================================= */}
 
-            <div className="form-card">
+            <div className="form-card cc-form-card">
 
               <div className="form-card-number">
                 02
@@ -1116,7 +1118,7 @@ export default function ReportIssue({
                 04 BEFORE PHOTO
             ================================================= */}
 
-            <div className="form-card">
+            <div className="form-card cc-form-card">
 
               <div className="form-card-number">
                 04
@@ -1148,12 +1150,13 @@ export default function ReportIssue({
                 </p>
 
                 {!beforePhotoPreview ? (
-                  <label className="photo-upload">
+                  <label className="photo-upload cc-photo-upload">
 
                     <input
                       type="file"
                       accept="image/*"
                       capture="environment"
+                      aria-label="Upload before photo"
                       onChange={
                         handleBeforePhotoChange
                       }
@@ -1178,6 +1181,7 @@ export default function ReportIssue({
                         beforePhotoPreview
                       }
                       alt="Before civic issue evidence"
+                      loading="lazy"
                     />
 
                     <button
@@ -1202,7 +1206,7 @@ export default function ReportIssue({
                 05 REPORTER
             ================================================= */}
 
-            <div className="form-card">
+            <div className="form-card cc-form-card">
 
               <div className="form-card-number">
                 05
@@ -1242,7 +1246,7 @@ export default function ReportIssue({
               06 LOCATION
           ================================================= */}
 
-          <div className="location-card">
+          <div className="location-card cc-location-card">
 
             <div className="location-card-heading">
 
@@ -1318,7 +1322,7 @@ export default function ReportIssue({
               SUBMIT
           ================================================= */}
 
-          <div className="form-submit-area">
+          <div className="form-submit-area cc-submit-area">
 
             <div className="privacy-note">
 
@@ -1333,9 +1337,9 @@ export default function ReportIssue({
 
             <button
               type="submit"
-              className="submit-report-button"
+              className="submit-report-button cc-submit-button"
             >
-              Submit Civic Report
+              <span>Submit Civic Report</span>
               <Send size={18} />
             </button>
 

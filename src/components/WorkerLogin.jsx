@@ -4,21 +4,90 @@ import {
   sendPasswordResetEmail,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
+
 import {
   HardHat,
   Mail,
   LockKeyhole,
   LogIn,
-  KeyRound,
   ArrowLeft,
   UserRound,
   Eye,
   EyeOff,
   ShieldCheck,
   CheckCircle2,
+  ArrowUpRight,
+  Radio,
 } from "lucide-react";
+
 import { auth, db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
+
+/* =========================================================
+   IMPORTANT:
+   WorkerInput MUST be outside WorkerLogin.
+   This prevents React from remounting the input on every
+   keystroke and losing keyboard focus.
+========================================================= */
+
+function WorkerInput({
+  icon: Icon,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  autoComplete,
+  passwordToggle = false,
+  showValue = false,
+  onToggle,
+}) {
+  return (
+    <div className="worker-login-input-wrap">
+      <Icon
+        size={17}
+        className="worker-login-input-icon"
+      />
+
+      <input
+        className="worker-login-input"
+        type={
+          passwordToggle
+            ? showValue
+              ? "text"
+              : "password"
+            : type
+        }
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+      />
+
+      {passwordToggle && (
+        <button
+          type="button"
+          className="worker-login-eye"
+          onClick={onToggle}
+          aria-label={
+            showValue
+              ? "Hide password"
+              : "Show password"
+          }
+        >
+          {showValue ? (
+            <EyeOff size={17} />
+          ) : (
+            <Eye size={17} />
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* =========================================================
+   WORKER LOGIN
+========================================================= */
 
 function WorkerLogin({ onLogin }) {
   const [mode, setMode] = useState("login");
@@ -26,33 +95,48 @@ function WorkerLogin({ onLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  /* =======================================================
+     CLEAR MESSAGES
+  ======================================================= */
 
   const clearMessages = () => {
     setError("");
     setMessage("");
   };
 
+  /* =======================================================
+     SWITCH MODE
+  ======================================================= */
+
   const switchMode = (nextMode) => {
     setMode(nextMode);
     clearMessages();
   };
 
-  // -----------------------------
-  // WORKER LOGIN
-  // -----------------------------
+  /* =======================================================
+     WORKER LOGIN
+  ======================================================= */
+
   const handleLogin = async (event) => {
     event.preventDefault();
 
     if (!email.trim() || !password) {
-      setError("Please enter your email and password.");
+      setError(
+        "Please enter your email and password."
+      );
       return;
     }
 
@@ -71,16 +155,26 @@ function WorkerLogin({ onLogin }) {
         onLogin(userCredential.user);
       }
     } catch (error) {
-      console.error("Worker login error:", error);
+      console.error(
+        "Worker login error:",
+        error
+      );
 
       if (
-        error.code === "auth/invalid-credential" ||
+        error.code ===
+          "auth/invalid-credential" ||
         error.code === "auth/wrong-password" ||
         error.code === "auth/user-not-found"
       ) {
-        setError("Incorrect email or password.");
-      } else if (error.code === "auth/invalid-email") {
-        setError("Please enter a valid email address.");
+        setError(
+          "Incorrect email or password."
+        );
+      } else if (
+        error.code === "auth/invalid-email"
+      ) {
+        setError(
+          "Please enter a valid email address."
+        );
       } else {
         setError(
           "Unable to sign in. Please try again."
@@ -91,9 +185,10 @@ function WorkerLogin({ onLogin }) {
     }
   };
 
-  // -----------------------------
-  // WORKER SIGN UP
-  // -----------------------------
+  /* =======================================================
+     WORKER SIGN UP
+  ======================================================= */
+
   const handleSignUp = async (event) => {
     event.preventDefault();
 
@@ -108,7 +203,9 @@ function WorkerLogin({ onLogin }) {
     }
 
     if (name.trim().length < 2) {
-      setError("Please enter your full name.");
+      setError(
+        "Please enter your full name."
+      );
       return;
     }
 
@@ -145,7 +242,8 @@ function WorkerLogin({ onLogin }) {
           email: worker.email,
           role: "worker",
           status: "active",
-          createdAt: new Date().toISOString(),
+          createdAt:
+            new Date().toISOString(),
         }
       );
 
@@ -153,10 +251,14 @@ function WorkerLogin({ onLogin }) {
         onLogin(worker);
       }
     } catch (error) {
-      console.error("Worker signup error:", error);
+      console.error(
+        "Worker signup error:",
+        error
+      );
 
       if (
-        error.code === "auth/email-already-in-use"
+        error.code ===
+        "auth/email-already-in-use"
       ) {
         setError(
           "An account already exists with this email."
@@ -189,10 +291,13 @@ function WorkerLogin({ onLogin }) {
     }
   };
 
-  // -----------------------------
-  // FORGOT PASSWORD
-  // -----------------------------
-  const handleForgotPassword = async (event) => {
+  /* =======================================================
+     FORGOT PASSWORD
+  ======================================================= */
+
+  const handleForgotPassword = async (
+    event
+  ) => {
     event.preventDefault();
 
     if (!email.trim()) {
@@ -220,7 +325,9 @@ function WorkerLogin({ onLogin }) {
         error
       );
 
-      if (error.code === "auth/invalid-email") {
+      if (
+        error.code === "auth/invalid-email"
+      ) {
         setError(
           "Please enter a valid email address."
         );
@@ -234,844 +341,708 @@ function WorkerLogin({ onLogin }) {
     }
   };
 
-  const inputStyle = {
-    width: "100%",
-    boxSizing: "border-box",
-    height: "52px",
-    border: "1px solid #dce3dc",
-    borderRadius: "14px",
-    padding: "0 46px 0 46px",
-    fontSize: "15px",
-    outline: "none",
-    background: "#fbfcfa",
-    color: "#18201b",
-    transition: "all 0.2s ease",
-  };
-
-  const fieldIconStyle = {
-    position: "absolute",
-    left: "16px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    color: "#64736a",
-    pointerEvents: "none",
-  };
-
-  const eyeButtonStyle = {
-    position: "absolute",
-    right: "12px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    border: "none",
-    background: "transparent",
-    color: "#64736a",
-    cursor: "pointer",
-    padding: "6px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
+  /* =======================================================
+     UI
+  ======================================================= */
 
   return (
-    <section
-      style={{
-        minHeight: "calc(100vh - 80px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "70px 20px",
-        background:
-          "linear-gradient(135deg, #f4f7f2 0%, #eef3ed 55%, #f8faf7 100%)",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "1020px",
-          display: "grid",
-          gridTemplateColumns: "0.9fr 1.1fr",
-          background: "#ffffff",
-          border: "1px solid #e1e7e1",
-          borderRadius: "28px",
-          overflow: "hidden",
-          boxShadow:
-            "0 24px 70px rgba(25, 45, 32, 0.12)",
-        }}
-      >
-        {/* LEFT BRAND PANEL */}
-        <div
-          style={{
-            padding: "48px 42px",
-            background:
-              "linear-gradient(145deg, #183b2a 0%, #24543a 100%)",
-            color: "#ffffff",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            minHeight: "560px",
-          }}
-        >
+    <section className="worker-login-page">
+
+      {/* BACKGROUND EFFECTS */}
+      <div className="worker-login-grid" />
+
+      <div className="worker-login-glow worker-glow-one" />
+      <div className="worker-login-glow worker-glow-two" />
+
+      {/* ===================================================
+          TOP BAR
+      =================================================== */}
+
+      <header className="worker-login-topbar">
+
+        <div className="worker-login-brand">
+
+          <div className="worker-login-brand-mark">
+            <HardHat size={20} />
+          </div>
+
           <div>
-            <div
-              style={{
-                width: "54px",
-                height: "54px",
-                borderRadius: "16px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background:
-                  "rgba(255,255,255,0.12)",
-                border:
-                  "1px solid rgba(255,255,255,0.18)",
-                marginBottom: "28px",
-              }}
-            >
-              <HardHat size={26} />
+            <div className="worker-login-brand-name">
+              CivicConnect
             </div>
 
-            <span
-              style={{
-                fontSize: "11px",
-                fontWeight: 800,
-                letterSpacing: "0.16em",
-                opacity: 0.72,
-              }}
-            >
-              CIVICCONNECT FIELD TEAM
-            </span>
-
-            <h1
-              style={{
-                fontSize: "42px",
-                lineHeight: "1.05",
-                margin: "16px 0",
-                letterSpacing: "-0.04em",
-              }}
-            >
-              Work that
-              <br />
-              improves
-              <br />
-              the neighbourhood.
-            </h1>
-
-            <p
-              style={{
-                color: "rgba(255,255,255,0.72)",
-                fontSize: "15px",
-                lineHeight: 1.7,
-                maxWidth: "360px",
-                margin: 0,
-              }}
-            >
-              Field workers document civic action,
-              capture evidence and help turn reported
-              problems into measurable improvements.
-            </p>
+            <div className="worker-login-brand-sub">
+              FIELD OPERATIONS
+            </div>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gap: "12px",
-              marginTop: "40px",
-            }}
-          >
-            {[
-              "View assigned civic work",
-              "Upload field evidence",
-              "Record action and outcome",
-            ].map((item) => (
-              <div
-                key={item}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  fontSize: "13px",
-                  color: "rgba(255,255,255,0.82)",
-                }}
-              >
-                <CheckCircle2 size={16} />
-                {item}
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* RIGHT FORM PANEL */}
-        <div
-          style={{
-            padding: "48px 48px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          {/* HEADER */}
-          <div style={{ marginBottom: "30px" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                color: "#315b42",
-                fontSize: "12px",
-                fontWeight: 800,
-                letterSpacing: "0.12em",
-                marginBottom: "12px",
-              }}
-            >
-              <ShieldCheck size={15} />
-              SECURE FIELD ACCESS
+        <div className="worker-login-top-status">
+
+          <span className="worker-login-live-dot" />
+
+          FIELD SYSTEM ONLINE
+
+        </div>
+
+      </header>
+
+      {/* ===================================================
+          MAIN CONTENT
+      =================================================== */}
+
+      <main className="worker-login-main">
+
+        {/* =================================================
+            LEFT SIDE
+        ================================================= */}
+
+        <div className="worker-login-side">
+
+          <div>
+
+            <div className="worker-login-kicker">
+              <Radio size={14} />
+
+              CIVIC FIELD NETWORK
             </div>
 
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "32px",
-                lineHeight: 1.1,
-                letterSpacing: "-0.03em",
-                color: "#18201b",
-              }}
-            >
+            <h1>
+              Work happens
+              <br />
+              <span>here.</span>
+            </h1>
+
+            <p className="worker-login-side-description">
+              CivicConnect gives field workers
+              a focused workspace to handle
+              assigned civic issues, document
+              real-world progress and close
+              the loop with evidence.
+            </p>
+
+          </div>
+
+          {/* FIELD MODULE */}
+
+          <div className="worker-login-field-module">
+
+            <div className="worker-login-module-head">
+
+              <div>
+                <span>
+                  ACTIVE FIELD SYSTEM
+                </span>
+
+                <strong>
+                  Worker Operations
+                </strong>
+              </div>
+
+              <ArrowUpRight
+                size={19}
+              />
+
+            </div>
+
+            <div className="worker-login-module-grid">
+
+              <div>
+                <span>01</span>
+                <strong>ASSIGN</strong>
+              </div>
+
+              <div>
+                <span>02</span>
+                <strong>DOCUMENT</strong>
+              </div>
+
+              <div>
+                <span>03</span>
+                <strong>ACT</strong>
+              </div>
+
+              <div>
+                <span>04</span>
+                <strong>REPORT</strong>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* FEATURES */}
+
+          <div className="worker-login-features">
+
+            <div className="worker-login-feature">
+
+              <div className="worker-login-feature-icon">
+                <CheckCircle2 size={16} />
+              </div>
+
+              <div>
+                <strong>
+                  Assigned Work
+                </strong>
+
+                <span>
+                  See civic issues assigned to you.
+                </span>
+              </div>
+
+            </div>
+
+            <div className="worker-login-feature">
+
+              <div className="worker-login-feature-icon">
+                <CheckCircle2 size={16} />
+              </div>
+
+              <div>
+                <strong>
+                  Field Evidence
+                </strong>
+
+                <span>
+                  Upload before and after evidence.
+                </span>
+              </div>
+
+            </div>
+
+            <div className="worker-login-feature">
+
+              <div className="worker-login-feature-icon">
+                <CheckCircle2 size={16} />
+              </div>
+
+              <div>
+                <strong>
+                  Action Tracking
+                </strong>
+
+                <span>
+                  Record work completed on-site.
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* =================================================
+            RIGHT LOGIN CARD
+        ================================================= */}
+
+        <div className="worker-login-card">
+
+          <div className="worker-login-card-top">
+
+            <div className="worker-login-security">
+
+              <ShieldCheck size={15} />
+
+              SECURE FIELD ACCESS
+
+            </div>
+
+            <div className="worker-login-card-index">
+              01 / ACCESS
+            </div>
+
+          </div>
+
+          {/* HEADING */}
+
+          <div className="worker-login-heading">
+
+            <h2>
+
               {mode === "login"
                 ? "Worker Login"
                 : mode === "signup"
                 ? "Create Worker Account"
                 : "Reset Password"}
+
             </h2>
 
-            <p
-              style={{
-                margin: "10px 0 0",
-                color: "#69766e",
-                lineHeight: 1.6,
-                fontSize: "14px",
-              }}
-            >
+            <p>
+
               {mode === "login"
                 ? "Sign in to access your assigned civic work."
                 : mode === "signup"
                 ? "Create your account for CivicConnect field operations."
                 : "We'll send a secure password reset link to your email."}
+
             </p>
+
           </div>
 
-          {/* LOGIN */}
+          {/* =================================================
+              LOGIN
+          ================================================= */}
+
           {mode === "login" && (
-            <form onSubmit={handleLogin}>
+
+            <form
+              className="worker-login-form"
+              onSubmit={handleLogin}
+            >
+
               {/* EMAIL */}
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "18px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Worker Email
 
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
-                >
-                  <Mail
-                    size={18}
-                    style={fieldIconStyle}
-                  />
+              <div className="worker-login-field">
 
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) =>
-                      setEmail(event.target.value)
-                    }
-                    placeholder="worker@example.com"
-                    autoComplete="email"
-                    style={inputStyle}
-                  />
-                </div>
-              </label>
+                <label>
+                  WORKER EMAIL
+                </label>
+
+                <WorkerInput
+                  icon={Mail}
+                  type="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
+                  }
+                  placeholder="worker@example.com"
+                  autoComplete="email"
+                />
+
+              </div>
 
               {/* PASSWORD */}
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "10px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Password
 
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
+              <div className="worker-login-field">
+
+                <label>
+                  PASSWORD
+                </label>
+
+                <WorkerInput
+                  icon={LockKeyhole}
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  passwordToggle
+                  showValue={showPassword}
+                  onToggle={() =>
+                    setShowPassword(
+                      (previous) =>
+                        !previous
+                    )
+                  }
+                />
+
+              </div>
+
+              {/* FORGOT */}
+
+              <div className="worker-login-forgot-row">
+
+                <button
+                  type="button"
+                  className="worker-login-forgot"
+                  onClick={() =>
+                    switchMode("forgot")
+                  }
                 >
-                  <LockKeyhole
-                    size={18}
-                    style={fieldIconStyle}
-                  />
+                  Forgot password?
+                </button>
 
-                  <input
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    value={password}
-                    onChange={(event) =>
-                      setPassword(event.target.value)
-                    }
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    style={inputStyle}
-                  />
+              </div>
 
-                  <button
-                    type="button"
-                    style={eyeButtonStyle}
-                    onClick={() =>
-                      setShowPassword(
-                        (previous) => !previous
-                      )
-                    }
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </button>
-                </div>
-              </label>
-
-              <button
-                type="button"
-                onClick={() =>
-                  switchMode("forgot")
-                }
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  padding: "6px 0",
-                  color: "#315b42",
-                  fontWeight: 700,
-                  fontSize: "13px",
-                  cursor: "pointer",
-                }}
-              >
-                Forgot password?
-              </button>
+              {/* ERROR */}
 
               {error && (
-                <div
-                  style={{
-                    marginTop: "14px",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    background: "#fff1ef",
-                    color: "#a33d32",
-                    fontSize: "13px",
-                    lineHeight: 1.5,
-                  }}
-                >
+
+                <div className="worker-login-message worker-login-error">
+
+                  <span className="worker-login-message-dot" />
+
                   {error}
+
                 </div>
+
               )}
+
+              {/* SUBMIT */}
 
               <button
                 type="submit"
+                className="worker-login-submit"
                 disabled={loading}
-                style={{
-                  width: "100%",
-                  height: "54px",
-                  marginTop: "22px",
-                  border: "none",
-                  borderRadius: "14px",
-                  background:
-                    loading
-                      ? "#789182"
-                      : "#183b2a",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  fontWeight: 800,
-                  cursor: loading
-                    ? "not-allowed"
-                    : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "9px",
-                }}
               >
-                {loading
-                  ? "Signing in..."
-                  : "Sign In"}
 
-                {!loading && <LogIn size={18} />}
+                <span>
+
+                  {loading
+                    ? "AUTHENTICATING..."
+                    : "ENTER FIELD CONSOLE"}
+
+                </span>
+
+                {!loading && (
+                  <LogIn size={17} />
+                )}
+
               </button>
 
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  margin: "26px 0",
-                  color: "#a0aaa3",
-                  fontSize: "11px",
-                }}
-              >
-                <span
-                  style={{
-                    height: "1px",
-                    background: "#e4e9e5",
-                    flex: 1,
-                  }}
-                />
-                OR
-                <span
-                  style={{
-                    height: "1px",
-                    background: "#e4e9e5",
-                    flex: 1,
-                  }}
-                />
+              {/* DIVIDER */}
+
+              <div className="worker-login-divider">
+
+                <span />
+
+                <small>
+                  NEW FIELD WORKER?
+                </small>
+
+                <span />
+
               </div>
+
+              {/* SIGNUP */}
 
               <button
                 type="button"
+                className="worker-login-secondary"
                 onClick={() =>
                   switchMode("signup")
                 }
-                style={{
-                  width: "100%",
-                  height: "52px",
-                  border: "1px solid #cfd9d1",
-                  borderRadius: "14px",
-                  background: "#ffffff",
-                  color: "#234331",
-                  fontSize: "14px",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
               >
-                Create Worker Account
+
+                CREATE WORKER ACCOUNT
+
+                <ArrowUpRight
+                  size={16}
+                />
+
               </button>
+
             </form>
+
           )}
 
-          {/* SIGN UP */}
+          {/* =================================================
+              SIGN UP
+          ================================================= */}
+
           {mode === "signup" && (
-            <form onSubmit={handleSignUp}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "16px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Full Name
 
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
-                >
-                  <UserRound
-                    size={18}
-                    style={fieldIconStyle}
-                  />
+            <form
+              className="worker-login-form"
+              onSubmit={handleSignUp}
+            >
 
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(event) =>
-                      setName(event.target.value)
-                    }
-                    placeholder="Enter your full name"
-                    autoComplete="name"
-                    style={inputStyle}
-                  />
-                </div>
-              </label>
+              {/* NAME */}
 
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "16px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Worker Email
+              <div className="worker-login-field">
 
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
-                >
-                  <Mail
-                    size={18}
-                    style={fieldIconStyle}
-                  />
+                <label>
+                  FULL NAME
+                </label>
 
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) =>
-                      setEmail(event.target.value)
-                    }
-                    placeholder="worker@example.com"
-                    autoComplete="email"
-                    style={inputStyle}
-                  />
-                </div>
-              </label>
+                <WorkerInput
+                  icon={UserRound}
+                  type="text"
+                  value={name}
+                  onChange={(event) =>
+                    setName(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Enter your full name"
+                  autoComplete="name"
+                />
 
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "16px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Password
+              </div>
 
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
-                >
-                  <LockKeyhole
-                    size={18}
-                    style={fieldIconStyle}
-                  />
+              {/* EMAIL */}
 
-                  <input
-                    type={
-                      showPassword
-                        ? "text"
-                        : "password"
-                    }
-                    value={password}
-                    onChange={(event) =>
-                      setPassword(event.target.value)
-                    }
-                    placeholder="Minimum 6 characters"
-                    autoComplete="new-password"
-                    style={inputStyle}
-                  />
+              <div className="worker-login-field">
 
-                  <button
-                    type="button"
-                    style={eyeButtonStyle}
-                    onClick={() =>
-                      setShowPassword(
-                        (previous) => !previous
-                      )
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </button>
-                </div>
-              </label>
+                <label>
+                  WORKER EMAIL
+                </label>
 
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "12px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Confirm Password
+                <WorkerInput
+                  icon={Mail}
+                  type="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
+                  }
+                  placeholder="worker@example.com"
+                  autoComplete="email"
+                />
 
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
-                >
-                  <LockKeyhole
-                    size={18}
-                    style={fieldIconStyle}
-                  />
+              </div>
 
-                  <input
-                    type={
-                      showConfirmPassword
-                        ? "text"
-                        : "password"
-                    }
-                    value={confirmPassword}
-                    onChange={(event) =>
-                      setConfirmPassword(
-                        event.target.value
-                      )
-                    }
-                    placeholder="Re-enter your password"
-                    autoComplete="new-password"
-                    style={inputStyle}
-                  />
+              {/* PASSWORD */}
 
-                  <button
-                    type="button"
-                    style={eyeButtonStyle}
-                    onClick={() =>
-                      setShowConfirmPassword(
-                        (previous) => !previous
-                      )
-                    }
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
-                  </button>
-                </div>
-              </label>
+              <div className="worker-login-field">
+
+                <label>
+                  PASSWORD
+                </label>
+
+                <WorkerInput
+                  icon={LockKeyhole}
+                  value={password}
+                  onChange={(event) =>
+                    setPassword(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Minimum 6 characters"
+                  autoComplete="new-password"
+                  passwordToggle
+                  showValue={showPassword}
+                  onToggle={() =>
+                    setShowPassword(
+                      (previous) =>
+                        !previous
+                    )
+                  }
+                />
+
+              </div>
+
+              {/* CONFIRM PASSWORD */}
+
+              <div className="worker-login-field">
+
+                <label>
+                  CONFIRM PASSWORD
+                </label>
+
+                <WorkerInput
+                  icon={LockKeyhole}
+                  value={confirmPassword}
+                  onChange={(event) =>
+                    setConfirmPassword(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Re-enter your password"
+                  autoComplete="new-password"
+                  passwordToggle
+                  showValue={
+                    showConfirmPassword
+                  }
+                  onToggle={() =>
+                    setShowConfirmPassword(
+                      (previous) =>
+                        !previous
+                    )
+                  }
+                />
+
+              </div>
+
+              {/* ERROR */}
 
               {error && (
-                <div
-                  style={{
-                    marginTop: "14px",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    background: "#fff1ef",
-                    color: "#a33d32",
-                    fontSize: "13px",
-                    lineHeight: 1.5,
-                  }}
-                >
+
+                <div className="worker-login-message worker-login-error">
+
+                  <span className="worker-login-message-dot" />
+
                   {error}
+
                 </div>
+
               )}
+
+              {/* CREATE */}
 
               <button
                 type="submit"
+                className="worker-login-submit"
                 disabled={loading}
-                style={{
-                  width: "100%",
-                  height: "54px",
-                  marginTop: "20px",
-                  border: "none",
-                  borderRadius: "14px",
-                  background:
-                    loading
-                      ? "#789182"
-                      : "#183b2a",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  fontWeight: 800,
-                  cursor: loading
-                    ? "not-allowed"
-                    : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "9px",
-                }}
               >
-                {loading
-                  ? "Creating Account..."
-                  : "Create Worker Account"}
+
+                <span>
+
+                  {loading
+                    ? "CREATING ACCOUNT..."
+                    : "CREATE FIELD ACCOUNT"}
+
+                </span>
 
                 {!loading && (
-                  <CheckCircle2 size={18} />
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  switchMode("login")
-                }
-                style={{
-                  width: "100%",
-                  height: "48px",
-                  marginTop: "10px",
-                  border: "none",
-                  background: "transparent",
-                  color: "#315b42",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "7px",
-                }}
-              >
-                <ArrowLeft size={16} />
-                Back to Worker Login
-              </button>
-            </form>
-          )}
-
-          {/* FORGOT PASSWORD */}
-          {mode === "forgot" && (
-            <form onSubmit={handleForgotPassword}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: "16px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  color: "#273229",
-                }}
-              >
-                Worker Email
-
-                <div
-                  style={{
-                    position: "relative",
-                    marginTop: "8px",
-                  }}
-                >
-                  <Mail
-                    size={18}
-                    style={fieldIconStyle}
-                  />
-
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) =>
-                      setEmail(event.target.value)
-                    }
-                    placeholder="worker@example.com"
-                    autoComplete="email"
-                    style={inputStyle}
-                  />
-                </div>
-              </label>
-
-              {error && (
-                <div
-                  style={{
-                    marginTop: "14px",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    background: "#fff1ef",
-                    color: "#a33d32",
-                    fontSize: "13px",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  {error}
-                </div>
-              )}
-
-              {message && (
-                <div
-                  style={{
-                    marginTop: "14px",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
-                    background: "#edf7ef",
-                    color: "#2f7045",
-                    fontSize: "13px",
-                    lineHeight: 1.5,
-                    display: "flex",
-                    gap: "8px",
-                    alignItems: "flex-start",
-                  }}
-                >
                   <CheckCircle2
                     size={17}
-                    style={{
-                      flexShrink: 0,
-                      marginTop: "1px",
-                    }}
                   />
-                  {message}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: "100%",
-                  height: "54px",
-                  marginTop: "20px",
-                  border: "none",
-                  borderRadius: "14px",
-                  background:
-                    loading
-                      ? "#789182"
-                      : "#183b2a",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  fontWeight: 800,
-                  cursor: loading
-                    ? "not-allowed"
-                    : "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "9px",
-                }}
-              >
-                {loading
-                  ? "Sending..."
-                  : "Send Reset Link"}
-
-                {!loading && (
-                  <Mail size={18} />
                 )}
+
               </button>
+
+              {/* BACK */}
 
               <button
                 type="button"
+                className="worker-login-back"
                 onClick={() =>
                   switchMode("login")
                 }
-                style={{
-                  width: "100%",
-                  height: "48px",
-                  marginTop: "10px",
-                  border: "none",
-                  background: "transparent",
-                  color: "#315b42",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "7px",
-                }}
               >
+
                 <ArrowLeft size={16} />
-                Back to Worker Login
+
+                BACK TO WORKER LOGIN
+
               </button>
+
             </form>
+
           )}
+
+          {/* =================================================
+              FORGOT PASSWORD
+          ================================================= */}
+
+          {mode === "forgot" && (
+
+            <form
+              className="worker-login-form"
+              onSubmit={
+                handleForgotPassword
+              }
+            >
+
+              {/* EMAIL */}
+
+              <div className="worker-login-field">
+
+                <label>
+                  WORKER EMAIL
+                </label>
+
+                <WorkerInput
+                  icon={Mail}
+                  type="email"
+                  value={email}
+                  onChange={(event) =>
+                    setEmail(
+                      event.target.value
+                    )
+                  }
+                  placeholder="worker@example.com"
+                  autoComplete="email"
+                />
+
+              </div>
+
+              {/* ERROR */}
+
+              {error && (
+
+                <div className="worker-login-message worker-login-error">
+
+                  <span className="worker-login-message-dot" />
+
+                  {error}
+
+                </div>
+
+              )}
+
+              {/* SUCCESS */}
+
+              {message && (
+
+                <div className="worker-login-message worker-login-success">
+
+                  <CheckCircle2
+                    size={16}
+                  />
+
+                  {message}
+
+                </div>
+
+              )}
+
+              {/* RESET */}
+
+              <button
+                type="submit"
+                className="worker-login-submit"
+                disabled={loading}
+              >
+
+                <span>
+
+                  {loading
+                    ? "SENDING..."
+                    : "SEND RESET LINK"}
+
+                </span>
+
+                {!loading && (
+                  <Mail size={17} />
+                )}
+
+              </button>
+
+              {/* BACK */}
+
+              <button
+                type="button"
+                className="worker-login-back"
+                onClick={() =>
+                  switchMode("login")
+                }
+              >
+
+                <ArrowLeft size={16} />
+
+                BACK TO WORKER LOGIN
+
+              </button>
+
+            </form>
+
+          )}
+
+          {/* FOOTER */}
+
+          <div className="worker-login-footer">
+
+            <ShieldCheck size={14} />
+
+            <span>
+              Protected CivicConnect field access
+            </span>
+
+            <span className="worker-login-footer-dot">
+              •
+            </span>
+
+            <span>
+              Secure session
+            </span>
+
+          </div>
+
         </div>
-      </div>
+
+      </main>
+
     </section>
   );
 }

@@ -856,827 +856,6 @@ function AdminDashboard({ user, onLogout }) {
 
   return (
     <>
-      <style>{`
-
-        * {
-          box-sizing: border-box;
-        }
-
-        .admin-dashboard {
-          min-height: 100vh;
-          background:
-            radial-gradient(
-              circle at top left,
-              rgba(48, 91, 66, 0.10),
-              transparent 30%
-            ),
-            #f4f6f2;
-          color: #17221a;
-          padding: 32px 20px 70px;
-          font-family:
-            Inter,
-            ui-sans-serif,
-            system-ui,
-            -apple-system,
-            BlinkMacSystemFont,
-            "Segoe UI",
-            sans-serif;
-        }
-
-        .admin-dashboard-shell {
-          width: 100%;
-          max-width: 1380px;
-          margin: 0 auto;
-        }
-
-        .admin-dashboard-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-end;
-          gap: 24px;
-          margin-bottom: 18px;
-        }
-
-        .admin-dashboard-kicker {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          color: #356247;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: .16em;
-        }
-
-        .admin-dashboard-header h1 {
-          margin: 8px 0 7px;
-          font-size: clamp(32px, 4vw, 48px);
-          line-height: 1;
-          letter-spacing: -.045em;
-          color: #17221a;
-        }
-
-        .admin-dashboard-header p {
-          max-width: 650px;
-          margin: 0;
-          color: #68736b;
-          font-size: 14px;
-          line-height: 1.7;
-        }
-
-        .admin-dashboard-actions {
-          display: flex;
-          gap: 10px;
-          flex-shrink: 0;
-        }
-
-        .admin-refresh-button,
-        .admin-logout-button {
-          height: 44px;
-          border-radius: 12px;
-          padding: 0 16px;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-          font-size: 13px;
-          font-weight: 800;
-          cursor: pointer;
-          transition: .2s ease;
-        }
-
-        .admin-refresh-button {
-          border: 1px solid #d9e1da;
-          background: #ffffff;
-          color: #294633;
-        }
-
-        .admin-refresh-button:hover {
-          transform: translateY(-1px);
-          border-color: #b7c8ba;
-        }
-
-        .admin-logout-button {
-          border: 0;
-          background: #183b2a;
-          color: white;
-        }
-
-        .admin-logout-button:hover {
-          transform: translateY(-1px);
-          background: #24543a;
-        }
-
-        .admin-user-bar {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 11px 15px;
-          margin-bottom: 22px;
-          border: 1px solid #dce4dc;
-          border-radius: 12px;
-          background: rgba(255,255,255,.72);
-          color: #748078;
-          font-size: 12px;
-        }
-
-        .admin-user-bar strong {
-          color: #26342b;
-        }
-
-        .admin-dashboard-error {
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          padding: 14px 16px;
-          margin-bottom: 20px;
-          border: 1px solid #f0c9c4;
-          border-radius: 14px;
-          background: #fff2f0;
-          color: #a23e34;
-          font-size: 13px;
-          line-height: 1.5;
-        }
-
-        .admin-stats-grid {
-          display: grid;
-          grid-template-columns:
-            repeat(5, minmax(0, 1fr));
-          gap: 13px;
-          margin-bottom: 24px;
-        }
-
-        .admin-stat-card {
-          min-height: 118px;
-          padding: 20px;
-          border: 1px solid #dfe6df;
-          border-radius: 18px;
-          background: rgba(255,255,255,.84);
-          box-shadow:
-            0 8px 25px rgba(28, 48, 35, .045);
-          display: flex;
-          align-items: center;
-          gap: 14px;
-        }
-
-        .admin-stat-icon {
-          width: 42px;
-          height: 42px;
-          border-radius: 13px;
-          background: #eaf2eb;
-          color: #315b42;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .admin-stat-card span {
-          display: block;
-          color: #78827b;
-          font-size: 11px;
-          font-weight: 700;
-          margin-bottom: 5px;
-        }
-
-        .admin-stat-card strong {
-          display: block;
-          color: #17221a;
-          font-size: 27px;
-          line-height: 1;
-          letter-spacing: -.03em;
-        }
-
-        .admin-reports-panel {
-          border: 1px solid #dce4dc;
-          border-radius: 24px;
-          background: rgba(255,255,255,.88);
-          box-shadow:
-            0 15px 45px rgba(27, 45, 34, .055);
-          overflow: hidden;
-        }
-
-        .admin-reports-heading {
-          padding: 24px 26px;
-          border-bottom: 1px solid #e7ebe7;
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 18px;
-        }
-
-        .admin-reports-heading h2 {
-          margin: 5px 0 0;
-          font-size: 24px;
-          letter-spacing: -.03em;
-        }
-
-        .admin-report-count {
-          padding: 7px 11px;
-          border-radius: 999px;
-          background: #edf3ee;
-          color: #315b42;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .admin-toolbar {
-          padding: 16px 26px;
-          display: flex;
-          gap: 10px;
-          border-bottom: 1px solid #e7ebe7;
-          background: #fbfcfa;
-        }
-
-        .admin-search-wrap {
-          position: relative;
-          flex: 1;
-        }
-
-        .admin-search-wrap svg {
-          position: absolute;
-          left: 13px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: #89948c;
-        }
-
-        .admin-search-input,
-        .admin-filter-select {
-          width: 100%;
-          height: 44px;
-          border: 1px solid #dbe3dc;
-          border-radius: 12px;
-          background: white;
-          color: #1c281f;
-          outline: none;
-          font-size: 13px;
-        }
-
-        .admin-search-input {
-          padding: 0 14px 0 40px;
-        }
-
-        .admin-filter-select {
-          width: 190px;
-          padding: 0 12px;
-        }
-
-        .admin-search-input:focus,
-        .admin-filter-select:focus,
-        .admin-followup-fields textarea:focus,
-        .admin-followup-fields select:focus,
-        .admin-assignment-select:focus {
-          border-color: #71917c;
-          box-shadow: 0 0 0 3px rgba(63, 105, 76, .09);
-        }
-
-        .admin-empty-state {
-          padding: 80px 20px;
-          text-align: center;
-          color: #78837b;
-        }
-
-        .admin-empty-state svg {
-          color: #789181;
-          margin-bottom: 10px;
-        }
-
-        .admin-empty-state h3 {
-          color: #27352b;
-          margin: 8px 0 4px;
-        }
-
-        .admin-empty-state p {
-          margin: 0;
-          font-size: 13px;
-        }
-
-        .admin-loading-icon {
-          animation: admin-spin 1s linear infinite;
-        }
-
-        @keyframes admin-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .admin-report-list {
-          padding: 20px;
-          display: grid;
-          gap: 18px;
-        }
-
-        .admin-report-card {
-          border: 1px solid #dfe6df;
-          border-radius: 20px;
-          background: white;
-          overflow: hidden;
-          box-shadow:
-            0 7px 25px rgba(27, 45, 34, .035);
-        }
-
-        .admin-report-main {
-          padding: 23px;
-        }
-
-        .admin-report-top {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 15px;
-        }
-
-        .admin-report-id {
-          display: inline-block;
-          margin-bottom: 6px;
-          color: #829087;
-          font-size: 10px;
-          font-weight: 900;
-          letter-spacing: .1em;
-        }
-
-        .admin-report-top h3 {
-          margin: 0;
-          font-size: 21px;
-          line-height: 1.25;
-          letter-spacing: -.025em;
-          color: #1b271f;
-        }
-
-        .admin-status-badge {
-          flex-shrink: 0;
-          padding: 7px 11px;
-          border-radius: 999px;
-          background: #edf1ee;
-          color: #536159;
-          font-size: 10px;
-          font-weight: 900;
-        }
-
-        .admin-status-badge.reported {
-          background: #fff3dd;
-          color: #9a641e;
-        }
-
-        .admin-status-badge.under-review {
-          background: #eaf1f8;
-          color: #42657f;
-        }
-
-        .admin-status-badge.improved {
-          background: #e6f4e9;
-          color: #337047;
-        }
-
-        .admin-report-description {
-          margin: 13px 0 15px;
-          color: #5e6962;
-          font-size: 13px;
-          line-height: 1.7;
-          max-width: 950px;
-        }
-
-        .admin-report-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-bottom: 18px;
-        }
-
-        .admin-report-meta span {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 7px 9px;
-          border: 1px solid #e3e9e4;
-          border-radius: 9px;
-          background: #fafcf9;
-          color: #6c776f;
-          font-size: 10px;
-          font-weight: 700;
-        }
-
-        .admin-report-meta svg {
-          color: #51745d;
-        }
-
-        .admin-assignment-box {
-          padding: 17px;
-          margin-bottom: 17px;
-          border: 1px solid #dce6de;
-          border-radius: 16px;
-          background:
-            linear-gradient(
-              135deg,
-              #f6faf6,
-              #fbfcfa
-            );
-        }
-
-        .admin-assignment-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          margin-bottom: 11px;
-        }
-
-        .admin-assignment-title {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          color: #315b42;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: .09em;
-        }
-
-        .admin-assignment-title svg {
-          width: 17px;
-        }
-
-        .admin-assignment-status {
-          font-size: 10px;
-          color: #718078;
-          font-weight: 700;
-        }
-
-        .admin-assignment-row {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-        }
-
-        .admin-assignment-select-wrap {
-          position: relative;
-          flex: 1;
-        }
-
-        .admin-assignment-select {
-          appearance: none;
-          width: 100%;
-          height: 46px;
-          padding: 0 40px 0 13px;
-          border: 1px solid #d5e0d7;
-          border-radius: 11px;
-          background: white;
-          color: #243229;
-          font-size: 13px;
-          font-weight: 700;
-          outline: none;
-          cursor: pointer;
-        }
-
-        .admin-assignment-select-wrap > svg {
-          position: absolute;
-          right: 12px;
-          top: 50%;
-          transform: translateY(-50%);
-          pointer-events: none;
-          color: #758179;
-        }
-
-        .admin-assigned-pill {
-          display: inline-flex;
-          align-items: center;
-          gap: 7px;
-          padding: 9px 11px;
-          border-radius: 10px;
-          background: #eaf3ec;
-          color: #315b42;
-          font-size: 11px;
-          font-weight: 800;
-          margin-top: 10px;
-        }
-
-        .admin-followup-box {
-          padding: 19px;
-          border: 1px solid #e2e7e3;
-          border-radius: 17px;
-          background: #fafbf9;
-        }
-
-        .admin-followup-heading {
-          display: flex;
-          align-items: flex-start;
-          justify-content: space-between;
-          margin-bottom: 15px;
-        }
-
-        .admin-followup-kicker {
-          display: block;
-          color: #6c7d72;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: .13em;
-          margin-bottom: 4px;
-        }
-
-        .admin-followup-heading h4 {
-          margin: 0;
-          color: #27352b;
-          font-size: 16px;
-        }
-
-        .admin-after-upload {
-          min-height: 130px;
-          border: 1px dashed #b9c9bd;
-          border-radius: 14px;
-          background: #f5f8f5;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          cursor: pointer;
-          padding: 20px;
-          transition: .2s ease;
-        }
-
-        .admin-after-upload:hover {
-          background: #edf4ee;
-          border-color: #789581;
-        }
-
-        .admin-after-upload svg {
-          color: #4d7659;
-          margin-bottom: 8px;
-        }
-
-        .admin-after-upload strong {
-          color: #31523c;
-          font-size: 13px;
-        }
-
-        .admin-after-upload span {
-          margin-top: 5px;
-          max-width: 360px;
-          color: #7b867e;
-          font-size: 11px;
-          line-height: 1.5;
-        }
-
-        .admin-after-upload input {
-          display: none;
-        }
-
-        .admin-after-preview {
-          position: relative;
-          border-radius: 14px;
-          overflow: hidden;
-          background: #eef1ed;
-          border: 1px solid #dfe6df;
-        }
-
-        .admin-after-preview img {
-          display: block;
-          width: 100%;
-          height: 270px;
-          object-fit: contain;
-          background: #eef1ed;
-        }
-
-        .admin-remove-after {
-          position: absolute;
-          right: 10px;
-          top: 10px;
-          width: 34px;
-          height: 34px;
-          border: 0;
-          border-radius: 10px;
-          background: rgba(20, 30, 24, .78);
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-        }
-
-        .admin-followup-fields {
-          display: grid;
-          grid-template-columns: 1fr 250px;
-          gap: 13px;
-          margin-top: 14px;
-        }
-
-        .admin-followup-fields label {
-          display: block;
-        }
-
-        .admin-followup-fields label > span {
-          display: block;
-          margin-bottom: 7px;
-          color: #405047;
-          font-size: 11px;
-          font-weight: 800;
-        }
-
-        .admin-followup-fields textarea,
-        .admin-followup-fields select {
-          width: 100%;
-          border: 1px solid #dce3dd;
-          border-radius: 11px;
-          background: white;
-          color: #26342b;
-          outline: none;
-          font: inherit;
-          font-size: 12px;
-        }
-
-        .admin-followup-fields textarea {
-          min-height: 88px;
-          resize: vertical;
-          padding: 11px 12px;
-          line-height: 1.55;
-        }
-
-        .admin-followup-fields select {
-          height: 46px;
-          padding: 0 11px;
-          cursor: pointer;
-        }
-
-        .admin-save-followup {
-          margin-top: 13px;
-          width: 100%;
-          min-height: 45px;
-          border: 0;
-          border-radius: 11px;
-          background: #183b2a;
-          color: white;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 7px;
-          font-size: 12px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-
-        .admin-save-followup:hover {
-          background: #24543a;
-        }
-
-        .admin-save-followup:disabled,
-        .admin-status-actions button:disabled,
-        .admin-delete-button:disabled,
-        .admin-after-upload:has(input:disabled) {
-          opacity: .55;
-          cursor: not-allowed;
-        }
-
-        .admin-report-actions {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          padding: 14px 20px;
-          border-top: 1px solid #e7ebe7;
-          background: #fcfdfb;
-        }
-
-        .admin-status-actions {
-          display: flex;
-          gap: 7px;
-          flex-wrap: wrap;
-        }
-
-        .admin-status-actions button {
-          height: 34px;
-          padding: 0 11px;
-          border: 1px solid #d9e1da;
-          border-radius: 9px;
-          background: white;
-          color: #647169;
-          font-size: 10px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .admin-status-actions button:hover {
-          border-color: #9bb1a1;
-          color: #315b42;
-        }
-
-        .admin-status-actions button.active {
-          border-color: #315b42;
-          background: #eaf3ec;
-          color: #315b42;
-        }
-
-        .admin-delete-button {
-          height: 34px;
-          padding: 0 12px;
-          border: 1px solid #f0d3cf;
-          border-radius: 9px;
-          background: #fff8f7;
-          color: #a34b41;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          font-size: 10px;
-          font-weight: 800;
-          cursor: pointer;
-        }
-
-        .admin-delete-button:hover {
-          background: #fff0ee;
-        }
-
-        @media (max-width: 1100px) {
-          .admin-stats-grid {
-            grid-template-columns:
-              repeat(3, minmax(0, 1fr));
-          }
-        }
-
-        @media (max-width: 760px) {
-          .admin-dashboard {
-            padding: 20px 12px 50px;
-          }
-
-          .admin-dashboard-header {
-            align-items: flex-start;
-            flex-direction: column;
-          }
-
-          .admin-dashboard-actions {
-            width: 100%;
-          }
-
-          .admin-refresh-button,
-          .admin-logout-button {
-            flex: 1;
-          }
-
-          .admin-stats-grid {
-            grid-template-columns:
-              repeat(2, minmax(0, 1fr));
-          }
-
-          .admin-toolbar {
-            flex-direction: column;
-          }
-
-          .admin-filter-select {
-            width: 100%;
-          }
-
-          .admin-reports-heading {
-            align-items: flex-start;
-            flex-direction: column;
-          }
-
-          .admin-report-top {
-            flex-direction: column;
-          }
-
-          .admin-followup-fields {
-            grid-template-columns: 1fr;
-          }
-
-          .admin-report-actions {
-            align-items: flex-start;
-            flex-direction: column;
-          }
-
-          .admin-delete-button {
-            width: 100%;
-            justify-content: center;
-          }
-
-          .admin-assignment-row {
-            flex-direction: column;
-            align-items: stretch;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .admin-stats-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .admin-stat-card {
-            min-height: 90px;
-          }
-
-          .admin-report-main {
-            padding: 16px;
-          }
-
-          .admin-report-list {
-            padding: 12px;
-          }
-
-          .admin-reports-heading,
-          .admin-toolbar {
-            padding-left: 16px;
-            padding-right: 16px;
-          }
-        }
-
-      `}</style>
 
 
       <section className="admin-dashboard">
@@ -1689,7 +868,7 @@ function AdminDashboard({ user, onLogout }) {
 
           <header className="admin-dashboard-header">
 
-            <div>
+            <div className="admin-hero-content">
 
               <span className="admin-dashboard-kicker">
                 <ShieldCheck size={14} />
@@ -1701,16 +880,36 @@ function AdminDashboard({ user, onLogout }) {
               </h1>
 
               <p>
-                Review community reports,
-                coordinate field workers,
-                manage civic progress and
-                maintain the evidence record.
+                Review community reports, coordinate field workers,
+                manage civic progress and maintain the evidence record.
               </p>
+
+              <div className="admin-hero-meta">
+                <span className="admin-live-chip">
+                  <i aria-hidden="true" />
+                  SYSTEM ONLINE
+                </span>
+                <span className="admin-hero-meta-text">
+                  Live Firestore operations console
+                </span>
+              </div>
 
             </div>
 
 
-            <div className="admin-dashboard-actions">
+            <div className="admin-hero-side">
+              <div className="admin-system-card">
+                <div className="admin-system-orbit" aria-hidden="true">
+                  <span />
+                </div>
+                <div>
+                  <span className="admin-system-label">CONTROL STATUS</span>
+                  <strong>Operational</strong>
+                  <small>Realtime data connected</small>
+                </div>
+              </div>
+
+              <div className="admin-dashboard-actions">
 
               <button
                 type="button"
@@ -1733,6 +932,7 @@ function AdminDashboard({ user, onLogout }) {
                 Sign Out
               </button>
 
+              </div>
             </div>
 
           </header>
@@ -1744,15 +944,11 @@ function AdminDashboard({ user, onLogout }) {
 
           {user?.email && (
             <div className="admin-user-bar">
-
-              <span>
-                Signed in as
-              </span>
-
-              <strong>
-                {user.email}
-              </strong>
-
+              <span className="admin-user-status-dot" aria-hidden="true" />
+              <span className="admin-user-label">Authenticated session</span>
+              <span className="admin-user-separator">/</span>
+              <strong>{user.email}</strong>
+              <span className="admin-user-secure">SECURE</span>
             </div>
           )}
 
@@ -1775,13 +971,7 @@ function AdminDashboard({ user, onLogout }) {
                 onClick={() =>
                   setError("")
                 }
-                style={{
-                  marginLeft: "auto",
-                  border: 0,
-                  background: "transparent",
-                  cursor: "pointer",
-                  color: "inherit",
-                }}
+                className="admin-error-dismiss"
               >
                 <X size={17} />
               </button>
@@ -1796,7 +986,7 @@ function AdminDashboard({ user, onLogout }) {
 
           <div className="admin-stats-grid">
 
-            <div className="admin-stat-card">
+            <div className="admin-stat-card admin-stat-total">
 
               <div className="admin-stat-icon">
                 <FileText size={20} />
@@ -1810,12 +1000,13 @@ function AdminDashboard({ user, onLogout }) {
                 <strong>
                   {stats.total}
                 </strong>
+                <small className="admin-stat-foot">Live records</small>
               </div>
 
             </div>
 
 
-            <div className="admin-stat-card">
+            <div className="admin-stat-card admin-stat-reported">
 
               <div className="admin-stat-icon">
                 <Clock3 size={20} />
@@ -1829,12 +1020,13 @@ function AdminDashboard({ user, onLogout }) {
                 <strong>
                   {stats.reported}
                 </strong>
+                <small className="admin-stat-foot">Awaiting review</small>
               </div>
 
             </div>
 
 
-            <div className="admin-stat-card">
+            <div className="admin-stat-card admin-stat-review">
 
               <div className="admin-stat-icon">
                 <RefreshCw size={20} />
@@ -1848,12 +1040,13 @@ function AdminDashboard({ user, onLogout }) {
                 <strong>
                   {stats.review}
                 </strong>
+                <small className="admin-stat-foot">In progress</small>
               </div>
 
             </div>
 
 
-            <div className="admin-stat-card">
+            <div className="admin-stat-card admin-stat-improved">
 
               <div className="admin-stat-icon">
                 <CheckCircle2 size={20} />
@@ -1867,12 +1060,13 @@ function AdminDashboard({ user, onLogout }) {
                 <strong>
                   {stats.improved}
                 </strong>
+                <small className="admin-stat-foot">Resolved evidence</small>
               </div>
 
             </div>
 
 
-            <div className="admin-stat-card">
+            <div className="admin-stat-card admin-stat-workers">
 
               <div className="admin-stat-icon">
                 <Users size={20} />
@@ -1886,6 +1080,7 @@ function AdminDashboard({ user, onLogout }) {
                 <strong>
                   {stats.workers}
                 </strong>
+                <small className="admin-stat-foot">Available team</small>
               </div>
 
             </div>
@@ -1913,11 +1108,16 @@ function AdminDashboard({ user, onLogout }) {
 
               </div>
 
-              <span className="admin-report-count">
-                {filteredIssues.length}
-                {" "}
-                visible
-              </span>
+              <div className="admin-report-heading-tools">
+                <span className="admin-stream-chip">
+                  <i aria-hidden="true" /> LIVE STREAM
+                </span>
+                <span className="admin-report-count">
+                  {filteredIssues.length}
+                  {" "}
+                  visible
+                </span>
+              </div>
 
             </div>
 
@@ -1925,6 +1125,10 @@ function AdminDashboard({ user, onLogout }) {
             {/* SEARCH + FILTER */}
 
             <div className="admin-toolbar">
+              <div className="admin-toolbar-caption">
+                <span>ISSUE INTELLIGENCE</span>
+                <small>Search, filter and coordinate field response</small>
+              </div>
 
               <div className="admin-search-wrap">
 
